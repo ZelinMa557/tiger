@@ -79,4 +79,28 @@ std::string lexer::next_word() {
         ret += '"';
         return ret;
     }
+    if(ch >= '0' && ch <= '9') {
+        ret += ch;
+        while(true) {
+            ch = get_next_char();
+            if(ch >= '0' && ch <= '9')
+                ret += ch;
+            else if(ch == EOF)
+                return ret;
+            else if(special.count(ch)) {
+                back_char();
+                return ret;
+            }
+            else if(ch == '/') {
+                escape_comment();
+                return ret;
+            }
+            else if(ch == ' ' || ch == '\t' || ch == '\n')
+                return ret;
+            else {
+                ret += ch;
+                std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
+            } 
+        }
+    }
 }

@@ -24,6 +24,7 @@ private:
     std::fstream src;
     char last_char = 0;
     inline char get_next_char() { return src.get(); };
+    inline void back_char() { src.seekg(src.tellg()-1); };
     std::string next_word();
     void escape_comment();
 public:
