@@ -170,3 +170,16 @@ std::string lexer::next_word() {
     else
         return get_identifier(ch);
 }
+
+token lexer::next() {
+    std::string next_ = next_word();
+    if(convert.count(next_))
+        return {convert[next_]};
+    if(next_.length() == 0)
+        return {EOF};
+    if('0' <= next_[0] && next_[0] <= '9')
+        return {INT_LITERAL, next_};
+    if(next_[0] == '"')
+        return {STR_LITERAL, next_};
+    return {IDENTIFIER, next_};
+}
