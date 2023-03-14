@@ -71,6 +71,54 @@ std::string lexer::get_num(char ch) {
             std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
         } 
     }
+    // unreachable
+    return {};
+}
+
+std::string lexer::get_identifier(char ch) {
+    std::string ret;
+    ret += ch;
+    while(true) {
+        ch = get_next_char();
+        if(ch == EOF)
+            return ret;
+        else if(special.count(ch)) {
+            back_char();
+            return ret;
+        }
+        else if(ch == '/') {
+            escape_comment();
+            return ret;
+        }
+        else if(ch == ' ' || ch == '\t' || ch == '\n')
+            return ret;
+        // valid char [0-9a-zA-Z]|_
+        else if(ch >= '0' && ch <= '9' || ch == '_' || 
+                ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
+            ret += ch;
+        }
+        else {
+            ret += ch;
+            std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
+        } 
+    }
+    // unreachable
+    return {};
+}
+
+std::string lexer::get_operator(char ch) {
+    // only operator start with [:<>] may contain more than one chars.
+    if(ch != ':' && ch != '<' && ch != '>') {
+        return {ch};
+    }
+    char next = get_next_char();
+    if(ch == ':' && next == '=' || ch == '<' && next == '>'
+        || ch == '<' && next == '=' || ch == '>' && next == '=') {
+        std::string ret{ch};
+        return ret+next;
+    }
+    back_char();
+    return {ch};
 }
 
 std::string lexer::get_string() {
@@ -108,14 +156,17 @@ std::string lexer::next_word() {
         ch = get_next_char();
     }
     if(ch == EOF) return {};
+
     // parse string
     if(ch == '"') 
         return get_string();
     // parse number
     else if(ch >= '0' && ch <= '9') 
         return get_num(ch);
+    // parse operator
     else if(special.count(ch))
         return get_operator(ch);
+    // parse identifier or other reserved word.
     else
         return get_identifier(ch);
 }
