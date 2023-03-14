@@ -46,6 +46,54 @@ void lexer::escape_comment() {
         exit(1);
     }
 }
+
+std::string lexer::get_num(char ch) {
+    std::string ret;
+    ret += ch;
+    while(true) {
+        ch = get_next_char();
+        if(ch >= '0' && ch <= '9')
+            ret += ch;
+        else if(ch == EOF)
+            return ret;
+        else if(special.count(ch)) {
+            back_char();
+            return ret;
+        }
+        else if(ch == '/') {
+            escape_comment();
+            return ret;
+        }
+        else if(ch == ' ' || ch == '\t' || ch == '\n')
+            return ret;
+        else {
+            ret += ch;
+            std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
+        } 
+    }
+}
+
+std::string lexer::get_string() {
+    char last = '"', ch;
+    std::string ret;
+    ret += '"';
+    while(true) {
+        ch = get_next_char();
+        if(ch == EOF) {
+            std::cerr << "lexer: fail to get complete string." << std::endl;
+            exit(1);
+        }
+        if(ch != '"') {
+            ret += ch;
+        } else if(last != '/') {
+            break;
+        }
+        last = ch;
+    }
+    ret += '"';
+    return ret;
+}
+
 std::string lexer::next_word() {
     char ch = get_next_char();
     if(ch == EOF) return {};
@@ -59,48 +107,15 @@ std::string lexer::next_word() {
         escape_comment();
         ch = get_next_char();
     }
+    if(ch == EOF) return {};
     // parse string
-    if(ch == '"') {
-        char last = ch;
-        ret += '"';
-        while(true) {
-            ch = get_next_char();
-            if(ch == EOF) {
-                std::cerr << "lexer: fail to get complete string." << std::endl;
-                exit(1);
-            }
-            if(ch != '"') {
-                ret += ch;
-            } else if(last != '/') {
-                break;
-            }
-            last = ch;
-        }
-        ret += '"';
-        return ret;
-    }
-    if(ch >= '0' && ch <= '9') {
-        ret += ch;
-        while(true) {
-            ch = get_next_char();
-            if(ch >= '0' && ch <= '9')
-                ret += ch;
-            else if(ch == EOF)
-                return ret;
-            else if(special.count(ch)) {
-                back_char();
-                return ret;
-            }
-            else if(ch == '/') {
-                escape_comment();
-                return ret;
-            }
-            else if(ch == ' ' || ch == '\t' || ch == '\n')
-                return ret;
-            else {
-                ret += ch;
-                std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
-            } 
-        }
-    }
+    if(ch == '"') 
+        return get_string();
+    // parse number
+    else if(ch >= '0' && ch <= '9') 
+        return get_num(ch);
+    else if(special.count(ch))
+        return get_operator(ch);
+    else
+        return get_identifier(ch);
 }

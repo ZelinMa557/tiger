@@ -22,11 +22,15 @@ private:
     enum class state { START, SINGLE_CMT, MULTI_CMT, IDENTI, INT_LITER, STR_LITER, OPERATOR };
     state m_state = state::START;
     std::fstream src;
-    char last_char = 0;
+    int line_cnt = 1;
     inline char get_next_char() { return src.get(); };
     inline void back_char() { src.seekg(src.tellg()-1); };
     std::string next_word();
     void escape_comment();
+    std::string get_num(char ch);
+    std::string get_identifier(char ch);
+    std::string get_operator(char ch);
+    std::string get_string();
 public:
     lexer() = delete;
     lexer(std::string src_file);
