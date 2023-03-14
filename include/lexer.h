@@ -1,6 +1,8 @@
 #pragma once
 #include "token.h"
 #include <unordered_map>
+#include <unordered_set>
+#include <fstream>
 class lexer
 {
 private:
@@ -15,8 +17,15 @@ private:
         {{"<>"}, 33}, {{"<"}, 34}, {{"<="}, 35}, {{">"}, 36}, {{">="}, 37},
         {{"&"}, 38}, {{"|"}, 39}, {{":="}, 40}
     };
-    enum class state { START, SINGLE_CMT, MULTI_CMT, IDENTI, INT_LITER, STR_LITER };
+    std::unordered_set<char> special{',', ':', ';', '+', '-', '*', '/', '(', ')', '[', ']',
+                                        '{', '}', '=', '<', '>', '&', '|'};
+    enum class state { START, SINGLE_CMT, MULTI_CMT, IDENTI, INT_LITER, STR_LITER, OPERATOR };
     state m_state = state::START;
+    std::fstream src;
+    char last_char = 0;
+    inline char get_next_char() { return src.get(); };
+    std::string next_word();
+    void escape_comment();
 public:
     lexer() = delete;
     lexer(std::string src_file);
