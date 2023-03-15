@@ -19,7 +19,7 @@ void lexer::escape_comment() {
     if(ch == '/') {
         while(true) {
             ch = get_next_char();
-            if(ch == '\n' || ch == 'EOF')
+            if(ch == '\n' || ch == EOF)
                 break;
         }
     }

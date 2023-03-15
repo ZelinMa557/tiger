@@ -62,7 +62,7 @@ public:
 
 
 // for debug
-std::string token::to_str() {
+inline std::string token::to_str() {
     std::string ans;
     switch (type)
     {

@@ -24,7 +24,7 @@ private:
     std::fstream src;
     int line_cnt = 1;
     inline char get_next_char() { return src.get(); };
-    inline void back_char() { src.seekg(src.tellg()-1); };
+    inline void back_char() { src.seekg(-1, std::ios::cur); };
     std::string next_word();
     void escape_comment();
     std::string get_num(char ch);
@@ -33,6 +33,7 @@ private:
     std::string get_string();
 public:
     lexer() = delete;
+    ~lexer();
     lexer(std::string src_file);
     token next();
 };
