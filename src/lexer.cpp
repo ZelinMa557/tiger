@@ -19,8 +19,10 @@ void lexer::escape_comment() {
     if(ch == '/') {
         while(true) {
             ch = get_next_char();
-            if(ch == '\n' || ch == EOF)
+            if(ch == '\n' || ch == EOF) {
+                if(ch == '\n') line_cnt++;
                 break;
+            }
         }
     }
     // multi-line comment
@@ -28,12 +30,14 @@ void lexer::escape_comment() {
         char last, cur;
         last = get_next_char();
         if(last == EOF) {
+            std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr<<"lexer: imcomplete comment, expected */" << std::endl;
             exit(1);
         }
         while(true) {
             cur = get_next_char();
             if(cur == EOF) {
+                std::cerr << "in line " << line_cnt << ":" <<std::endl;
                 std::cerr<<"lexer: imcomplete comment, expected */" << std::endl;
                 exit(1);
             }
@@ -42,9 +46,10 @@ void lexer::escape_comment() {
             last = cur;
         }
     }
+    // maybe it's not a comment, it's div
     else {
-        std::cerr<<"lexer: unknown comment type /"<< ch <<", expected // or /* ." << std::endl;
-        exit(1);
+        back_char();
+        back_char();
     }
 }
 
@@ -65,10 +70,13 @@ std::string lexer::get_num(char ch) {
             escape_comment();
             return ret;
         }
-        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
+        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+            if(ch == '\n') line_cnt++;
             return ret;
+        }
         else {
             ret += ch;
+            std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr << "lexer: invalid num " << ret <<"..."<<std::endl;
         } 
     }
@@ -91,14 +99,17 @@ std::string lexer::get_identifier(char ch) {
             escape_comment();
             return ret;
         }
-        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
+        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+            if(ch == '\n') line_cnt++;
             return ret;
+        }
         // valid char [0-9a-zA-Z]|_
         else if(ch >= '0' && ch <= '9' || ch == '_' || 
                 ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z') {
             ret += ch;
         }
         else {
+            std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr << "lexer: char " << ch <<" are not expected to occur in identifier."<<std::endl;
         } 
     }
@@ -128,6 +139,7 @@ std::string lexer::get_string() {
     while(true) {
         ch = get_next_char();
         if(ch == EOF) {
+            std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr << "lexer: fail to get complete string." << std::endl;
             exit(1);
         }
@@ -147,6 +159,7 @@ std::string lexer::next_word() {
     if(ch == EOF) return {};
     // escape space
     while (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t') {
+        if(ch == '\n') line_cnt++;
         ch = get_next_char();
         if(ch == EOF) return {};
     }
@@ -157,6 +170,7 @@ std::string lexer::next_word() {
     }
     // escape space after escape comment
     while (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t') {
+        if(ch == '\n') line_cnt++;
         ch = get_next_char();
         if(ch == EOF) return {};
     }
@@ -179,12 +193,12 @@ std::string lexer::next_word() {
 token lexer::next() {
     std::string next_ = next_word();
     if(convert.count(next_))
-        return {convert[next_]};
+        return {convert[next_], line_cnt};
     if(next_.length() == 0)
-        return {EOF};
+        return {EOF, line_cnt};
     if('0' <= next_[0] && next_[0] <= '9')
-        return {INT_LITERAL, next_};
+        return {INT_LITERAL, next_, line_cnt};
     if(next_[0] == '"')
-        return {STR_LITERAL, next_};
-    return {IDENTIFIER, next_};
+        return {STR_LITERAL, next_, line_cnt};
+    return {IDENTIFIER, next_, line_cnt};
 }

@@ -53,11 +53,12 @@ class token
 public:
     const int type;
     const std::string val;
+    const int line;
     
     token() = delete;
-    token(int t) : type(t) {};
-    token(int t, std::string &v) : type(t), val(v) {};
-    token(int t, std::string &&v) : type(t), val(v) {};
+    token(int t, int l) : type(t), line(l){};
+    token(int t, std::string &v, int l) : type(t), val(v), line(l) {};
+    token(int t, std::string &&v, int l) : type(t), val(v), line(l) {};
     std::string to_str();
     ~token() = default;
 };
