@@ -41,10 +41,12 @@
 #define AND 38
 #define OR 39
 #define ASSIGN 40
+#define INT_TYPE 41
+#define STR_TYPE 42
 
-#define IDENTIFIER 41
-#define INT_LITERAL 42
-#define STR_LITERAL 43
+#define IDENTIFIER 43
+#define INT_LITERAL 44
+#define STR_LITERAL 45
 
 class token
 {
@@ -106,11 +108,13 @@ inline std::string token::to_str() {
         case 38: ans = "AND"; break;
         case 39: ans = "OR"; break;
         case 40: ans = "ASSIGN"; break;
-        case 41: ans = "IDENTIFIER"; break;
-        case 42: ans = "INT_LITERAL"; break;
-        case 43: ans = "STR_LITERAL"; break;
+        case 41: ans = "INT_TYPE"; break;
+        case 42: ans = "STR_TYPE"; break;
+        case 43: ans = "IDENTIFIER"; break;
+        case 44: ans = "INT_LITERAL"; break;
+        case 45: ans = "STR_LITERAL"; break;
     }
-    if(type > 40) {
+    if(type > 42) {
         ans += ' ';
         ans += val;
     }

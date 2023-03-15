@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
         token t = l.next();
         if(t.type == EOF)
             break;
-        // cout << t.to_str() << endl;
+        cout << t.to_str() << endl;
     }
     return 0;
 }

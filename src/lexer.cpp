@@ -39,6 +39,7 @@ void lexer::escape_comment() {
             }
             if(last == '*' && cur == '/')
                 break;
+            last = cur;
         }
     }
     else {
@@ -64,11 +65,11 @@ std::string lexer::get_num(char ch) {
             escape_comment();
             return ret;
         }
-        else if(ch == ' ' || ch == '\t' || ch == '\n')
+        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
             return ret;
         else {
             ret += ch;
-            std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
+            std::cerr << "lexer: invalid num " << ret <<"..."<<std::endl;
         } 
     }
     // unreachable
@@ -90,7 +91,7 @@ std::string lexer::get_identifier(char ch) {
             escape_comment();
             return ret;
         }
-        else if(ch == ' ' || ch == '\t' || ch == '\n')
+        else if(ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')
             return ret;
         // valid char [0-9a-zA-Z]|_
         else if(ch >= '0' && ch <= '9' || ch == '_' || 
@@ -98,8 +99,7 @@ std::string lexer::get_identifier(char ch) {
             ret += ch;
         }
         else {
-            ret += ch;
-            std::cerr << "lexer: invalid identifier " << ret <<"..."<<std::endl;
+            std::cerr << "lexer: char " << ch <<" are not expected to occur in identifier."<<std::endl;
         } 
     }
     // unreachable
@@ -154,6 +154,11 @@ std::string lexer::next_word() {
     if(ch == '/') {
         escape_comment();
         ch = get_next_char();
+    }
+    // escape space after escape comment
+    while (ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t') {
+        ch = get_next_char();
+        if(ch == EOF) return {};
     }
     if(ch == EOF) return {};
 
