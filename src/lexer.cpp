@@ -78,6 +78,7 @@ std::string lexer::get_num(char ch) {
             ret += ch;
             std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr << "lexer: invalid num " << ret <<"..."<<std::endl;
+            exit(1);
         } 
     }
     // unreachable
@@ -111,6 +112,7 @@ std::string lexer::get_identifier(char ch) {
         else {
             std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr << "lexer: char " << ch <<" are not expected to occur in identifier."<<std::endl;
+            exit(1);
         } 
     }
     // unreachable
