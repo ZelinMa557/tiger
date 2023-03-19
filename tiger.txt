@@ -1,0 +1,75 @@
+## LL(1) grammer of tiger programming language
+
+program -> exp
+
+exps -> exp exps
+     ->
+
+exp -> INT_LITERAL
+    -> STRING_LITERAL
+    -> NIL
+    -> letexp
+    -> ifexp
+    -> whileexp
+    -> forexp
+    -> callexp
+    -> L_SMALL exps R_SMALL
+    -> IDENTIFIER idexp
+    -> BREAK
+
+letexp -> LET decs IN exps END
+
+ifexp -> IF exp THEN exp elseexp
+
+elseexp -> ELSE exp
+        ->
+
+whileexp -> WHILE exp DO exp
+
+forexp -> FOR IDENTIFIER ASSIGN exp TO exp DO exp
+
+idexp -> L_SMALL arglist R_SMALL
+      -> L_MID exp R_MID ofexp
+      -> L_BIG fassignlist R_BIG
+      -> DOT IDENTIFIER
+      ->
+
+ofexp -> OF exp
+      ->
+
+fassignlist -> IDENTIFIER EQ exp fassignlist_
+fassignlist_ -> COMMA IDENTIFIER EQ exp fassignlist_
+             ->
+
+arglist -> IDENTIFIER arglist_
+arglist_ -> COMMA IDENTIFIER arglist_
+         ->
+
+decs -> dec decs
+     ->
+
+dec -> tydecs
+    -> vardec
+    -> funcdecs
+
+tydecs -> tydec tydecs
+       ->
+tydec -> TYPE IDENTIFIER EQ ty
+
+vardec -> VAR IDENTIFIER ASSIGN exp 
+
+funcdecs -> funcdec funcdecs
+funcdec -> FUNCTION IDENTIFIER L_SMALL tyfields R_SMALL funcdec_
+funcdec_ -> EQ exp
+         -> COLON IDENTIFIER EQ exp
+
+ty -> IDENTIFIER
+   -> ARRAY OF IDENTIFIER
+   -> L_BIG tyfields R_BIG
+
+tyfields -> tyfield tyfields_
+         ->
+tyfields_ -> COMMA tyfield tyfields_
+          ->
+
+tyfield -> IDENTIFIER COLON IDENTIFIER
