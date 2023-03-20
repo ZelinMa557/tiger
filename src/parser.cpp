@@ -92,4 +92,138 @@ std::unique_ptr<A_exp> parser::exp() {
         return std::unique_ptr<A_exp>(new A_BreakExp(t.line));
         break;
     }
+    // we can assume that this exp is an exp with operator,
+    // and throw it to relevant functions.
+    unuse(t);
+    return orexp();
+}
+
+std::unique_ptr<A_exp> parser::orexp() {
+    auto a = andexp();
+    auto o = orexp_();
+    if(o == nullptr)
+        return a;
+    std::unique_ptr<A_exp> one_exp(new A_IntExp(a->pos, 1));
+    return std::unique_ptr<A_exp>(new A_IfExp(a->pos, std::move(a), std::move(o), std::move(one_exp)));
+}
+
+std::unique_ptr<A_exp> parser::orexp_() {
+    token expected_or = tok();
+    if(expected_or.type != OR) {
+        unuse(expected_or);
+        return nullptr;
+    }
+    return orexp();
+}
+
+std::unique_ptr<A_exp> parser::andexp() {
+    auto r = relexp();
+    auto a = andexp_();
+    if(a == nullptr)
+        return r;
+    std::unique_ptr<A_exp> zero_exp(new A_IntExp(a->pos, 0));
+    return std::unique_ptr<A_exp>(new A_IfExp(a->pos, std::move(r), std::move(a), std::move(zero_exp)));
+}
+
+std::unique_ptr<A_exp> parser::andexp_() {
+    token expected_and = tok();
+    if(expected_and.type != AND) {
+        unuse(expected_and);
+        return nullptr;
+    }
+    return andexp();
+}
+
+std::unique_ptr<A_exp> parser::relexp() {
+    auto a = addexp();
+    int ty = 0;
+    auto r = relexp_(ty);
+    if(r == nullptr)
+        return a;
+    A_oper op;
+    switch(ty) {
+    case EQ: op = A_oper::A_eqOp; break;
+    case NEQ: op = A_oper::A_neqOp; break;
+    case LE: op = A_oper::A_leOp; break;
+    case LT: op = A_oper::A_ltOP; break;
+    case GE: op = A_oper::A_geOp; break;
+    case GT: op = A_oper::A_gtOp; break;
+    }
+    return std::unique_ptr<A_exp>(new A_OpExp(a->pos, op, std::move(a), std::move(r)));
+}
+
+std::unique_ptr<A_exp> parser::relexp_(int &ty) {
+    token t = tok();
+    switch (t.type)
+    {
+    case EQ: case NEQ: case LT:
+    case LE: case GT: case GE:
+        ty = t.type;
+        break;
+    default:
+        unuse(t);
+        return nullptr;
+    }
+    return relexp();
+}
+
+std::unique_ptr<A_exp> parser::addexp() {
+    auto m = mulexp();
+    int ty = 0;
+    auto a = addexp_(ty);
+    if(a == nullptr)
+        return m;
+    A_oper op;
+    if(ty == ADD) op = A_oper::A_plusOp;
+    else op = A_oper::A_minusOp;
+    return std::unique_ptr<A_exp>(new A_OpExp(m->pos, op, std::move(m), std::move(a)));
+}
+
+std::unique_ptr<A_exp> parser::addexp_(int &ty) {
+    token t = tok();
+    if(t.type != ADD && t.type != SUB) {
+        unuse(t);
+        return nullptr;
+    }
+    return addexp();
+}
+
+std::unique_ptr<A_exp> parser::mulexp() {
+    auto s = subexp();
+    int ty = 0;
+    auto m = mulexp_(ty);
+    if(m == nullptr)
+        return s;
+    A_oper op;
+    if(ty == MUL) op = A_oper::A_timesOp;
+    else op = A_oper::A_divideOp;
+    return std::unique_ptr<A_exp>(new A_OpExp(s->pos, op, std::move(s), std::move(m)));
+}
+
+std::unique_ptr<A_exp> parser::mulexp_(int &ty) {
+    token t = tok();
+    if(t.type != MUL && t.type != DIV) {
+        unuse(t);
+        return nullptr;
+    }
+    return mulexp();
+}
+
+std::unique_ptr<A_exp> parser::subexp() {
+
+}
+
+std::unique_ptr<A_exp> parser::valexp() {
+    token t = tok();
+    switch (t.type)
+    {
+    case INT_LITERAL:
+        return std::unique_ptr<A_exp>(new A_IntExp(t.line, atoi(t.val.c_str())));
+    case STR_LITERAL:
+        return std::unique_ptr<A_exp>(new A_StringExp(t.line, t.val.substr(1, t.val.length()-2)));
+    case NIL:
+        return std::unique_ptr<A_exp>(new A_NilExp(t.line));
+    default:
+        break;
+    }
 }
