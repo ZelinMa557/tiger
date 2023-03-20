@@ -2,20 +2,21 @@
 
 program -> exp
 
-exps -> exp exps
+exps -> exp SEMICOLON exps
      ->
 
-exp -> INT_LITERAL
-    -> STRING_LITERAL
-    -> NIL
-    -> letexp
+exp -> letexp
     -> ifexp
     -> whileexp
     -> forexp
-    -> callexp
-    -> L_SMALL exps R_SMALL
-    -> IDENTIFIER idexp
     -> BREAK
+    -> orexp
+    -> andexp
+    -> relexp
+    -> addexp
+    -> mulexp
+    -> subexp
+
 
 letexp -> LET decs IN exps END
 
@@ -27,12 +28,6 @@ elseexp -> ELSE exp
 whileexp -> WHILE exp DO exp
 
 forexp -> FOR IDENTIFIER ASSIGN exp TO exp DO exp
-
-idexp -> L_SMALL arglist R_SMALL
-      -> L_MID exp R_MID ofexp
-      -> L_BIG fassignlist R_BIG
-      -> DOT IDENTIFIER
-      ->
 
 ofexp -> OF exp
       ->
@@ -56,7 +51,7 @@ tydecs -> tydec tydecs
        ->
 tydec -> TYPE IDENTIFIER EQ ty
 
-vardec -> VAR IDENTIFIER ASSIGN exp 
+vardec -> VAR IDENTIFIER COLON IDENTIFIER ASSIGN exp 
 
 funcdecs -> funcdec funcdecs
 funcdec -> FUNCTION IDENTIFIER L_SMALL tyfields R_SMALL funcdec_
@@ -73,3 +68,44 @@ tyfields_ -> COMMA tyfield tyfields_
           ->
 
 tyfield -> IDENTIFIER COLON IDENTIFIER
+
+orexp -> andexp orexp_
+orexp_ -> OR andexp
+       ->
+
+andexp -> relexp andexp_
+andexp_ -> AND relexp
+        ->
+
+relexp -> addexp relexp_
+relexp_ -> EQ addexp
+        -> NEQ addexp
+        -> LE addexp
+        -> LT addexp
+        -> GE addexp
+        -> GT addexp
+        ->
+
+addexp -> mulexp addexp_
+addexp_ -> ADD mulexp
+        -> SUB mulexp
+        ->
+
+mulexp -> subexp mulexp_
+mulexp_ -> MUL mulexp
+        -> DIV mulexp
+
+subexp -> SUB value
+       -> value
+
+value -> L_SMALL exps R_SMALL
+       -> IDENTIFIER idexp
+       -> INT_LITERAL
+       -> STRING_LITERAL
+       -> NIL
+
+idexp -> L_SMALL arglist R_SMALL
+      -> L_MID exp R_MID ofexp
+      -> L_BIG fassignlist R_BIG
+      -> DOT IDENTIFIER
+      ->

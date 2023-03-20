@@ -7,3 +7,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(include)
 
 add_executable(lexer_test src/lexer.cpp test/lexer_test.cpp)
+add_executable(parser_test src/parser.cpp test/parser_test.cpp)
