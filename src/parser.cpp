@@ -210,7 +210,14 @@ std::unique_ptr<A_exp> parser::mulexp_(int &ty) {
 }
 
 std::unique_ptr<A_exp> parser::subexp() {
-
+    token t = tok();
+    if(t.type != SUB) {
+        unuse(t);
+        return valexp();
+    }
+    auto v = valexp();
+    std::unique_ptr<A_exp> zero_exp(new A_IntExp(t.line, 0));
+    return std::unique_ptr<A_exp>(new A_OpExp(t.line, A_oper::A_minusOp, std::move(zero_exp), std::move(v)));
 }
 
 std::unique_ptr<A_exp> parser::valexp() {
@@ -225,5 +232,27 @@ std::unique_ptr<A_exp> parser::valexp() {
         return std::unique_ptr<A_exp>(new A_NilExp(t.line));
     default:
         break;
+    }
+}
+
+std::unique_ptr<A_exp> parser::lval(token &t) {
+    switch (t.type)
+    {
+    case IDENTIFIER: break; //todo
+    case L_SMALL: break; //todo
+    default:
+        std::cerr << "in line " << t.line << ":" << std::endl;
+        std::cerr << "parser: expected left value, but got " << t.to_str() << std::endl;
+        exit(1);
+    }
+}
+
+std::unique_ptr<A_exp> parser::idexp(token &identifier) {
+    token t = tok();
+    switch(t.type) {
+        case L_SMALL: break; //todo
+        case L_MID: break; //todo
+        case L_BIG: break; //todo
+        case DOT: break; //todo
     }
 }

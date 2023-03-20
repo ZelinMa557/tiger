@@ -24,6 +24,8 @@ private:
     std::unique_ptr<A_exp> mulexp_(int &ty);
     std::unique_ptr<A_exp> subexp();
     std::unique_ptr<A_exp> valexp();
+    std::unique_ptr<A_exp> lval(token &t);
+    std::unique_ptr<A_exp> idexp(token &identifier);
     std::unique_ptr<A_decList> decs();
     std::unique_ptr<A_expList> exps();
     std::unique_ptr<A_exp> seqexp();

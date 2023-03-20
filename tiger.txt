@@ -98,14 +98,14 @@ mulexp_ -> MUL mulexp
 subexp -> SUB value
        -> value
 
-value -> L_SMALL exps R_SMALL
-       -> IDENTIFIER idexp
+value  -> lval
        -> INT_LITERAL
        -> STRING_LITERAL
        -> NIL
-
+lval -> L_SMALL exps R_SMALL
+     -> IDENTIFIER idexp
 idexp -> L_SMALL arglist R_SMALL
       -> L_MID exp R_MID ofexp
       -> L_BIG fassignlist R_BIG
-      -> DOT IDENTIFIER
+      -> DOT lval
       ->
