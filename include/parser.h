@@ -29,6 +29,8 @@ private:
     std::unique_ptr<A_decList> decs();
     std::unique_ptr<A_expList> exps();
     std::unique_ptr<A_exp> seqexp();
+
+    std::unique_ptr<A_FieldVar> aux_dot_exp(std::unique_ptr<A_FieldVar> initial, std::queue<S_symbol> &q);
 public:
     parser() = delete;
     parser(std::string src_file) : lex(src_file) {};

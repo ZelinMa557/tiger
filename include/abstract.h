@@ -59,7 +59,7 @@ public:
 struct A_VarExp : public A_exp {
 public:
     std::unique_ptr<A_var> var;
-    A_VarExp(A_pos p, A_var var_) : A_exp(p), var(&var_) {};
+    A_VarExp(A_pos p, std::unique_ptr<A_var> var_) : A_exp(p), var(std::move(var_)) {};
 };
 
 struct A_NilExp : public A_exp {

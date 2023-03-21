@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <iostream>
+#include <queue>
 
 token parser::tok() {
     if(q.empty())
@@ -238,7 +239,7 @@ std::unique_ptr<A_exp> parser::valexp() {
 std::unique_ptr<A_exp> parser::lval(token &t) {
     switch (t.type)
     {
-    case IDENTIFIER: break; //todo
+    case IDENTIFIER: return idexp(t); break;
     case L_SMALL: break; //todo
     default:
         std::cerr << "in line " << t.line << ":" << std::endl;
@@ -247,12 +248,39 @@ std::unique_ptr<A_exp> parser::lval(token &t) {
     }
 }
 
+std::unique_ptr<A_FieldVar> parser::aux_dot_exp(std::unique_ptr<A_FieldVar> initial, std::queue<S_symbol> &q) {
+    if(q.empty()) return initial;
+    auto sym = q.front();
+    q.pop();
+    std::unique_ptr<A_FieldVar> cur(new A_FieldVar(initial->pos, std::move(initial), sym));
+    return aux_dot_exp(std::move(cur), q);
+}
 std::unique_ptr<A_exp> parser::idexp(token &identifier) {
     token t = tok();
     switch(t.type) {
         case L_SMALL: break; //todo
         case L_MID: break; //todo
         case L_BIG: break; //todo
-        case DOT: break; //todo
+        case DOT: 
+        {
+            std::queue<S_symbol> q;
+            while(true) {
+                auto id = eat(IDENTIFIER);
+                q.push(id.val);
+                auto expected_dot = eat(DOT);
+                if(expected_dot.type != DOT) {
+                    unuse(expected_dot);
+                    break;
+                }
+            }
+            auto symbol = q.front();
+            q.pop();
+            std::unique_ptr<A_FieldVar> cur(new A_FieldVar(t.line, 
+                        std::unique_ptr<A_var>(new A_SimpleVar(t.line, t.val)), symbol));
+            auto res = aux_dot_exp(std::move(cur), q);
+            std::unique_ptr<A_exp> varexp(new A_VarExp(res->pos, std::move(res)));
+            return varexp;
+        }
+        break; //todo
     }
 }

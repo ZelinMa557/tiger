@@ -107,5 +107,8 @@ lval -> L_SMALL exps R_SMALL
 idexp -> L_SMALL arglist R_SMALL
       -> L_MID exp R_MID ofexp
       -> L_BIG fassignlist R_BIG
-      -> DOT lval
+      -> dotexp
       ->
+
+dotexp -> DOT IDENTIFIER dotexp
+       ->
