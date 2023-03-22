@@ -47,6 +47,7 @@ dec -> tydecs
     -> vardec
     -> funcdecs
 
+// todo : assign, declare, types
 tydecs -> tydec tydecs
        ->
 tydec -> TYPE IDENTIFIER EQ ty
