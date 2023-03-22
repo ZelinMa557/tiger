@@ -1,5 +1,5 @@
 ## LL(1) grammer of tiger programming language
-
+// todo : types, declares
 program -> exp
 
 exps -> exp SEMICOLON exps
@@ -49,7 +49,6 @@ dec -> tydecs
     -> vardec
     -> funcdecs
 
-// todo : record, declare, types
 tydecs -> tydec tydecs
        ->
 tydec -> TYPE IDENTIFIER EQ ty

@@ -244,9 +244,9 @@ public:
 
 struct A_fieldList {
 public:
-    A_field head;
+    std::unique_ptr<A_field> head;
     std::unique_ptr<A_fieldList> tail;
-    A_fieldList(A_field head_, std::unique_ptr<A_fieldList> tail_) : head(head_), tail(std::move(tail_)) {};
+    A_fieldList(std::unique_ptr<A_field> head_, std::unique_ptr<A_fieldList> tail_) : head(std::move(head_)), tail(std::move(tail_)) {};
 };
 
 struct A_expList {

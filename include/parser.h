@@ -30,8 +30,10 @@ private:
     std::unique_ptr<A_exp> idexp(std::unique_ptr<A_var> var);
     std::unique_ptr<A_efieldList> efield_list();
     std::unique_ptr<A_efieldList> efield_list_(std::unique_ptr<A_efieldList> cur);
+    std::unique_ptr<A_fieldList> field_list();
+    std::unique_ptr<A_fieldList> field_list_(std::unique_ptr<A_fieldList> cur);
+    std::unique_ptr<A_ty> ty();
     std::unique_ptr<A_decList> decs();
-    std::unique_ptr<A_expList> exps();
     std::unique_ptr<A_exp> seqexp();
 public:
     parser() = delete;
