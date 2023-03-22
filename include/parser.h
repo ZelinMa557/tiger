@@ -12,6 +12,8 @@ private:
     void unuse(token t) { q.push(t); };
     std::unique_ptr<A_dec> dec();
     std::unique_ptr<A_exp> exp();
+    std::unique_ptr<A_exp> assignexp();
+    std::unique_ptr<A_exp> assignexp_();
     std::unique_ptr<A_exp> orexp();
     std::unique_ptr<A_exp> orexp_();
     std::unique_ptr<A_exp> andexp();

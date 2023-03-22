@@ -92,11 +92,32 @@ std::unique_ptr<A_exp> parser::exp() {
     case BREAK:
         return std::unique_ptr<A_exp>(new A_BreakExp(t.line));
         break;
+    case L_SMALL:
+        {
+            auto seq = seqexp();
+            eat(R_SMALL);
+            return seq;
+        }
+        break;
     }
     // we can assume that this exp is an exp with operator,
     // and throw it to relevant functions.
     unuse(t);
     return orexp();
+}
+
+std::unique_ptr<A_exp> parser::assignexp() {
+    auto o = orexp();
+    auto a = assignexp_();
+    if(a == nullptr)
+        return o;
+    if(o->ty != A_exp::type::VarExp) {
+        std::cerr << "in line " << a->pos << std::endl;
+        std::cerr << "parser: left side can not be right value in assign exp." << std::endl;
+        exit(1);
+    }
+    auto varexp = dynamic_cast<A_VarExp*>(o.release());
+    return std::make_unique<A_AssignExp>(o->pos, varexp->var);
 }
 
 std::unique_ptr<A_exp> parser::orexp() {

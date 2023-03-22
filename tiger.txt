@@ -10,12 +10,14 @@ exp -> letexp
     -> whileexp
     -> forexp
     -> BREAK
+    -> assignexp
     -> orexp
     -> andexp
     -> relexp
     -> addexp
     -> mulexp
     -> subexp
+    -> exps
 
 
 letexp -> LET decs IN exps END
@@ -69,6 +71,10 @@ tyfields_ -> COMMA tyfield tyfields_
           ->
 
 tyfield -> IDENTIFIER COLON IDENTIFIER
+
+assignexp -> orexp assignexp_
+assignexp_ -> ASSIGN assignexp
+           ->
 
 orexp -> andexp orexp_
 orexp_ -> OR andexp
