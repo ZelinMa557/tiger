@@ -16,12 +16,9 @@ private:
         {{"+"}, 28}, {{"-"}, 29}, {{"*"}, 30}, {{"/"}, 31}, {{"="}, 32},
         {{"<>"}, 33}, {{"<"}, 34}, {{"<="}, 35}, {{">"}, 36}, {{">="}, 37},
         {{"&"}, 38}, {{"|"}, 39}, {{":="}, 40},
-        {{"int"}, 41}, {{"string"}, 42}
     };
     std::unordered_set<char> special{',', ':', ';', '+', '-', '*', '/', '(', ')', '[', ']',
                                         '{', '}', '=', '<', '>', '&', '|', '.'};
-    enum class state { START, SINGLE_CMT, MULTI_CMT, IDENTI, INT_LITER, STR_LITER, OPERATOR };
-    state m_state = state::START;
     std::fstream src;
     int line_cnt = 1;
     inline char get_next_char() { return src.get(); };
