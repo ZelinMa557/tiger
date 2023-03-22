@@ -232,10 +232,16 @@ std::unique_ptr<A_exp> parser::valexp() {
     case NIL:
         return std::unique_ptr<A_exp>(new A_NilExp(t.line));
     case L_SMALL:
-        //todo
+        {
+            auto seq = seqexp();
+            eat(R_SMALL);
+            return seq;
+        }
+        break;
     default:
         break;
     }
+    return lval(t);
 }
 
 std::unique_ptr<A_exp> parser::lval(token &t) {
@@ -291,4 +297,21 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
         break;
     }
     return std::make_unique<A_VarExp>(var->pos, std::move(var));
+}
+
+std::unique_ptr<A_exp> parser::seqexp() {
+    std::unique_ptr<A_expList> list(nullptr);
+    A_pos p = 0;
+    while(true) {
+        auto e = exp();
+        p = e->pos;
+        std::unique_ptr<A_expList> tail(list.release());
+        list.reset(new A_expList(std::move(e), std::move(tail)));
+        token t = tok();
+        if(t.type == COMMA)
+            continue;
+        unuse(t);
+        break;
+    }
+    return std::make_unique<A_SeqExp>(p, std::move(list));
 }
