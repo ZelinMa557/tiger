@@ -103,7 +103,7 @@ std::unique_ptr<A_exp> parser::exp() {
     // we can assume that this exp is an exp with operator,
     // and throw it to relevant functions.
     unuse(t);
-    return orexp();
+    return assignexp();
 }
 
 std::unique_ptr<A_exp> parser::assignexp() {
@@ -118,6 +118,15 @@ std::unique_ptr<A_exp> parser::assignexp() {
     }
     auto varexp = dynamic_cast<A_VarExp*>(o.release());
     return std::make_unique<A_AssignExp>(o->pos, varexp->var);
+}
+
+std::unique_ptr<A_exp> parser::assignexp_() {
+    auto t = tok();
+    if(t.type != ASSIGN) {
+        unuse(t);
+        return nullptr;
+    }
+    return assignexp();
 }
 
 std::unique_ptr<A_exp> parser::orexp() {
@@ -313,6 +322,13 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
             return idexp(std::move(fvar));
         }
         break;
+    case L_BIG:
+        {
+            auto list = efield_list();
+            eat(R_BIG);
+            auto v = dynamic_cast<A_SimpleVar*>(var.release());
+            return std::make_unique<A_RecordExp>(v->pos, v->sym, std::move(list));
+        }
     default:
         unuse(t);
         break;
@@ -335,4 +351,30 @@ std::unique_ptr<A_exp> parser::seqexp() {
         break;
     }
     return std::make_unique<A_SeqExp>(p, std::move(list));
+}
+std::unique_ptr<A_efieldList> parser::efield_list() {
+    token expected_id = tok();
+    if(expected_id.type != IDENTIFIER) {
+        unuse(expected_id);
+        return nullptr;
+    }
+    eat(EQ);
+    auto e = exp();
+    std::unique_ptr<A_efield> field(new A_efield(expected_id.val, std::move(e)));
+    std::unique_ptr<A_efieldList> cur(new A_efieldList(std::move(field), nullptr));
+    return efield_list_(std::move(cur));
+}
+
+std::unique_ptr<A_efieldList> parser::efield_list_(std::unique_ptr<A_efieldList> cur) {
+    token expected_com = tok();
+    if(expected_com.type != IDENTIFIER) {
+        unuse(expected_com);
+        return cur;
+    }
+    token id = eat(IDENTIFIER);
+    eat(EQ);
+    auto e = exp();
+    std::unique_ptr<A_efield> field(new A_efield(id.val, std::move(e)));
+    std::unique_ptr<A_efieldList> next(new A_efieldList(std::move(field), std::move(cur)));
+    return efield_list_(std::move(next));
 }
