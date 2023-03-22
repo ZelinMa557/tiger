@@ -231,21 +231,17 @@ std::unique_ptr<A_exp> parser::valexp() {
         return std::unique_ptr<A_exp>(new A_StringExp(t.line, t.val.substr(1, t.val.length()-2)));
     case NIL:
         return std::unique_ptr<A_exp>(new A_NilExp(t.line));
+    case L_SMALL:
+        //todo
     default:
         break;
     }
 }
 
 std::unique_ptr<A_exp> parser::lval(token &t) {
-    // switch (t.type)
-    // {
-    // case IDENTIFIER: return idexp(t); break;
-    // case L_SMALL: break; //todo
-    // default:
-    //     std::cerr << "in line " << t.line << ":" << std::endl;
-    //     std::cerr << "parser: expected left value, but got " << t.to_str() << std::endl;
-    //     exit(1);
-    // }
+    token identifier = eat(IDENTIFIER);
+    auto var = std::make_unique<A_SimpleVar>(t.line, t.val);
+    return idexp(std::move(var));
 }
 
 std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
