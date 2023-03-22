@@ -1,6 +1,7 @@
 #include "parser.h"
 #include <iostream>
 #include <queue>
+#include <vector>
 
 token parser::tok() {
     if(q.empty())
@@ -431,4 +432,68 @@ std::unique_ptr<A_fieldList> parser::field_list_(std::unique_ptr<A_fieldList> cu
     std::unique_ptr<A_field> field(new A_field(name.line, type.val, name.val));
     auto next = std::make_unique<A_fieldList>(std::move(field), std::move(cur));
     return field_list_(std::move(next));
+}
+
+std::unique_ptr<A_ty> parser::ty() {
+    token t = tok();
+    switch (t.type)
+    {
+    case IDENTIFIER: return std::make_unique<A_NameTy>(t.line, t.val);
+    case ARRAY:
+        {
+            eat(OF);
+            token id = eat(IDENTIFIER);
+            return std::make_unique<A_ArrayTy>(t.line, id.val);
+        }
+    case L_BIG:
+        {
+            auto list = field_list();
+            eat(R_BIG);
+            return std::make_unique<A_RecordTy>(t.line, list.release());
+        }
+    default:
+        std::cerr << "in line " << t.line << ":" << std::endl;
+        std::cerr << "parser: expected identifier, array, or {, but got " << t.to_str() << std::endl;
+        exit(1);
+        break;
+    }
+    // unreachable
+    return nullptr;
+}
+
+std::unique_ptr<A_decList> parser::decs() {
+    std::vector<std::unique_ptr<A_dec>> vec;
+    while(true) {
+        auto d = dec();
+        if(d == nullptr)
+            break;
+        if(!vec.empty()) {
+            if(vec.back()->ty == A_dec::type::FUNCDS && d->ty == A_dec::type::FUNCDS) {
+                auto back = dynamic_cast<A_FunctionDec*>(vec.back().release());
+                vec.pop_back();
+                auto list = std::make_unique<A_funcdecList>(std::move(d), back->function);
+                vec.push_back(std::make_unique<A_FunctionDec>(back->pos, list.release()));
+                continue;
+            }
+            if(vec.back()->ty == A_dec::type::TYDS && d->ty == A_dec::type::TYDS) {
+                auto back = dynamic_cast<A_TypeDec*>(vec.back().release());
+                vec.pop_back();
+                auto list = std::make_unique<A_nametyList>(std::move(d), back->type);
+                vec.push_back(std::make_unique<A_TypeDec>(back->pos, list.release()));
+                continue;
+            }
+        }
+        vec.push_back(std::move(d));
+    }
+    std::unique_ptr<A_decList> list(nullptr);
+    for(int i = vec.size()-1; i >= 0; i--) {
+        auto tail = list.release();
+        auto list_ = std::make_unique<A_decList>(vec[i].release(), tail);
+        list.reset(list_.release());
+    }
+    return list;
+}
+
+std::unique_ptr<A_exp> parser::parse() {
+    return exp();
 }
