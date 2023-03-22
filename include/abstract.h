@@ -27,6 +27,7 @@ struct A_var {
 public:
     A_pos pos;
     A_var(A_pos p) : pos(p) {}; 
+    virtual ~A_var() {};
 };
 
 struct A_SimpleVar : public A_var {
@@ -54,6 +55,7 @@ struct A_exp {
 public:
     A_pos pos;
     A_exp(A_pos p) : pos(p) {};
+    virtual ~A_exp() {};
 };
 
 struct A_VarExp : public A_exp {

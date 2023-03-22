@@ -237,16 +237,62 @@ std::unique_ptr<A_exp> parser::valexp() {
 }
 
 std::unique_ptr<A_exp> parser::lval(token &t) {
-    switch (t.type)
-    {
-    case IDENTIFIER: return idexp(t); break;
-    case L_SMALL: break; //todo
-    default:
-        std::cerr << "in line " << t.line << ":" << std::endl;
-        std::cerr << "parser: expected left value, but got " << t.to_str() << std::endl;
-        exit(1);
-    }
+    // switch (t.type)
+    // {
+    // case IDENTIFIER: return idexp(t); break;
+    // case L_SMALL: break; //todo
+    // default:
+    //     std::cerr << "in line " << t.line << ":" << std::endl;
+    //     std::cerr << "parser: expected left value, but got " << t.to_str() << std::endl;
+    //     exit(1);
+    // }
 }
 
 std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
+    token t = tok();
+    switch (t.type)
+    {
+    case DOT:
+        {
+            token iden = eat(IDENTIFIER);
+            return idexp(std::make_unique<A_FieldVar>(var->pos, std::move(var), iden.val));
+        }
+        break;
+    case L_SMALL:
+        {
+            std::unique_ptr<A_SimpleVar> func(dynamic_cast<A_SimpleVar*>(var.release()));
+            token t = tok();
+            if(t.type == R_SMALL) {
+                return std::make_unique<A_CallExp>(var->pos, func->sym, nullptr);
+            }
+            std::unique_ptr<A_expList> list(nullptr);
+            while(true) {
+                auto e = exp();
+                std::unique_ptr<A_expList> tail(list.release());
+                list.reset(new A_expList(std::move(e), std::move(tail)));
+                token t = tok();
+                if(t.type == R_SMALL)
+                    break;
+                if(t.type != COMMA) {
+                    std::cerr << "in line " << t.line << ": " << std::endl;
+                    std::cerr << "parser: expected ')' or ',' but got " << t.to_str() << std::endl;
+                    exit(1);
+                }
+            }
+            return std::make_unique<A_CallExp>(var->pos, func->sym, std::move(list));
+        }
+        break;
+    case L_MID:
+        {
+            auto e = exp();
+            eat(R_MID);
+            std::unique_ptr<A_SubscriptVar> fvar(new A_SubscriptVar(var->pos, std::move(var), std::move(e)));
+            return idexp(std::move(fvar));
+        }
+        break;
+    default:
+        unuse(t);
+        break;
+    }
+    return std::make_unique<A_VarExp>(var->pos, std::move(var));
 }

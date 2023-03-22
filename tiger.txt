@@ -104,8 +104,8 @@ value  -> lval
        -> NIL
        -> L_SMALL exps R_SMALL
 lval -> IDENTIFIER idexp
-idexp -> L_SMALL arglist R_SMALL idexp
+idexp -> L_SMALL arglist R_SMALL
       -> L_MID exp R_MID idexp
-      -> L_BIG fassignlist R_BIG idexp
+      -> L_BIG fassignlist R_BIG //todo: fix this expression
       -> DOT IDENTIFIER idexp
       ->
