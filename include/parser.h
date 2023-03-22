@@ -25,12 +25,10 @@ private:
     std::unique_ptr<A_exp> subexp();
     std::unique_ptr<A_exp> valexp();
     std::unique_ptr<A_exp> lval(token &t);
-    std::unique_ptr<A_exp> idexp(token &identifier);
+    std::unique_ptr<A_exp> idexp(std::unique_ptr<A_var> var);
     std::unique_ptr<A_decList> decs();
     std::unique_ptr<A_expList> exps();
     std::unique_ptr<A_exp> seqexp();
-
-    std::unique_ptr<A_FieldVar> aux_dot_exp(std::unique_ptr<A_FieldVar> initial, std::queue<S_symbol> &q);
 public:
     parser() = delete;
     parser(std::string src_file) : lex(src_file) {};

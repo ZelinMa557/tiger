@@ -102,13 +102,10 @@ value  -> lval
        -> INT_LITERAL
        -> STRING_LITERAL
        -> NIL
-lval -> L_SMALL exps R_SMALL
-     -> IDENTIFIER idexp
-idexp -> L_SMALL arglist R_SMALL
-      -> L_MID exp R_MID ofexp
-      -> L_BIG fassignlist R_BIG
-      -> dotexp
+       -> L_SMALL exps R_SMALL
+lval -> IDENTIFIER idexp
+idexp -> L_SMALL arglist R_SMALL idexp
+      -> L_MID exp R_MID idexp
+      -> L_BIG fassignlist R_BIG idexp
+      -> DOT IDENTIFIER idexp
       ->
-
-dotexp -> DOT IDENTIFIER dotexp
-       ->
