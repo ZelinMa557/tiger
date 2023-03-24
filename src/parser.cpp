@@ -42,8 +42,8 @@ std::unique_ptr<A_dec> parser::dec() {
             eat(EQ);
             auto type = ty();
             std::unique_ptr<A_namety> type_(new A_namety(id.val, std::move(type)));
-            auto list = std::make_unique<A_nametyList>(type_.release(), nullptr);
-            return std::make_unique<A_TypeDec>(id.line, list.release());
+            auto list = std::make_unique<A_nametyList>(std::move(type_), nullptr);
+            return std::make_unique<A_TypeDec>(id.line, std::move(list));
         }
         break;
     case FUNCTION:
@@ -55,9 +55,9 @@ std::unique_ptr<A_dec> parser::dec() {
             token next = tok();
             if(next.type == EQ) {
                 auto e = exp();
-                auto func = std::make_unique<A_funcdec>(t.line, func_name, list.release(), "", e.release());
-                auto list = std::make_unique<A_funcdecList>(func.release(), nullptr);
-                return std::make_unique<A_FunctionDec>(func_name.line, list.release());
+                auto func = std::make_unique<A_funcdec>(t.line, func_name.val, std::move(list), "", std::move(e));
+                auto list = std::make_unique<A_funcdecList>(std::move(func), nullptr);
+                return std::make_unique<A_FunctionDec>(func_name.line, std::move(list));
             }
         }
     default:
@@ -145,7 +145,7 @@ std::unique_ptr<A_exp> parser::assignexp() {
         exit(1);
     }
     auto varexp = dynamic_cast<A_VarExp*>(o.release());
-    return std::make_unique<A_AssignExp>(o->pos, varexp->var);
+    return std::make_unique<A_AssignExp>(o->pos, std::move(varexp->var), std::move(a));
 }
 
 std::unique_ptr<A_exp> parser::assignexp_() {
@@ -328,7 +328,7 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
             std::unique_ptr<A_expList> list(nullptr);
             while(true) {
                 auto e = exp();
-                std::unique_ptr<A_expList> tail(list.release());
+                std::unique_ptr<A_expList> tail(std::move(list));
                 list.reset(new A_expList(std::move(e), std::move(tail)));
                 token t = tok();
                 if(t.type == R_SMALL)
@@ -370,7 +370,7 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
                 std:: cerr << "in line " << v->pos << ":" << std::endl;
                 std:: cerr << "parser: array exp expect format 'typename[size] of initialexp'." << std::endl;
             }
-            return std::make_unique<A_ArrayExp>(v->pos, primev->sym, v->exp.release(), e.release());
+            return std::make_unique<A_ArrayExp>(v->pos, primev->sym, std::move(v->exp), std::move(e));
         }
     default:
         unuse(t);
@@ -385,7 +385,7 @@ std::unique_ptr<A_exp> parser::seqexp() {
     while(true) {
         auto e = exp();
         p = e->pos;
-        std::unique_ptr<A_expList> tail(list.release());
+        std::unique_ptr<A_expList> tail(std::move(list));
         list.reset(new A_expList(std::move(e), std::move(tail)));
         token t = tok();
         if(t.type == COMMA)
@@ -464,7 +464,7 @@ std::unique_ptr<A_ty> parser::ty() {
         {
             auto list = field_list();
             eat(R_BIG);
-            return std::make_unique<A_RecordTy>(t.line, list.release());
+            return std::make_unique<A_RecordTy>(t.line, std::move(list));
         }
     default:
         std::cerr << "in line " << t.line << ":" << std::endl;
@@ -486,15 +486,15 @@ std::unique_ptr<A_decList> parser::decs() {
             if(vec.back()->ty == A_dec::type::FUNCDS && d->ty == A_dec::type::FUNCDS) {
                 auto back = dynamic_cast<A_FunctionDec*>(vec.back().release());
                 vec.pop_back();
-                auto list = std::make_unique<A_funcdecList>(std::move(d), back->function);
-                vec.push_back(std::make_unique<A_FunctionDec>(back->pos, list.release()));
+                auto list = std::make_unique<A_funcdecList>(std::move(dynamic_cast<A_FunctionDec*>(d.release())->function->head), std::move(back->function));
+                vec.push_back(std::make_unique<A_FunctionDec>(back->pos, std::move(list)));
                 continue;
             }
             if(vec.back()->ty == A_dec::type::TYDS && d->ty == A_dec::type::TYDS) {
                 auto back = dynamic_cast<A_TypeDec*>(vec.back().release());
                 vec.pop_back();
-                auto list = std::make_unique<A_nametyList>(std::move(d), back->type);
-                vec.push_back(std::make_unique<A_TypeDec>(back->pos, list.release()));
+                auto list = std::make_unique<A_nametyList>(std::move(dynamic_cast<A_TypeDec*>(d.release())->type->head), std::move(back->type));
+                vec.push_back(std::make_unique<A_TypeDec>(back->pos, std::move(list)));
                 continue;
             }
         }
@@ -502,8 +502,7 @@ std::unique_ptr<A_decList> parser::decs() {
     }
     std::unique_ptr<A_decList> list(nullptr);
     for(int i = vec.size()-1; i >= 0; i--) {
-        auto tail = list.release();
-        auto list_ = std::make_unique<A_decList>(vec[i].release(), tail);
+        auto list_ = std::make_unique<A_decList>(std::move(vec[i]), std::move(list));
         list.reset(list_.release());
     }
     return list;
