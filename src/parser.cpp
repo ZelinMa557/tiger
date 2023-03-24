@@ -29,11 +29,20 @@ std::unique_ptr<A_dec> parser::dec() {
     case VAR : 
         {
             auto id = eat(IDENTIFIER);
-            eat(COLON);
-            auto ty = eat(IDENTIFIER);
-            eat(ASSIGN);
+            S_symbol type("");
+            token t = tok();
+            if(t.type == COLON) {
+                auto id = eat(IDENTIFIER);
+                type = id.val;
+                eat(ASSIGN);
+            }
+            else if(t.type != ASSIGN) {
+                std::cerr << "in line " << t.line << ":" << std::endl;
+                std::cerr << "parser: expected COLON or ASSIGN, but got " << t.to_str() << std::endl;
+                exit(1);
+            }
             auto e = exp();
-            return std::unique_ptr<A_dec>(new A_VarDec(t.line, id.val, ty.val, std::move(e)));
+            return std::unique_ptr<A_dec>(new A_VarDec(t.line, id.val, type, std::move(e)));
         } 
         break;
     case TYPE :
