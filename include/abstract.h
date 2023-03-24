@@ -171,8 +171,8 @@ public:
     S_symbol type;
     std::unique_ptr<A_exp> size;
     std::unique_ptr<A_exp> init;
-    A_ArrayExp(A_pos p, std::unique_ptr<A_exp> size_, std::unique_ptr<A_exp> init_) :
-        A_exp(p, type::ArrayExp), size(std::move(size_)), init(std::move(init_)) {};
+    A_ArrayExp(A_pos p, S_symbol t, std::unique_ptr<A_exp> size_, std::unique_ptr<A_exp> init_) :
+        A_exp(p, type::ArrayExp), type(t), size(std::move(size_)), init(std::move(init_)) {};
 };
 
 struct A_dec {

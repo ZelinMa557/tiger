@@ -357,6 +357,21 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
             auto v = dynamic_cast<A_SimpleVar*>(var.release());
             return std::make_unique<A_RecordExp>(v->pos, v->sym, std::move(list));
         }
+    case OF:
+        {
+            auto v = dynamic_cast<A_SubscriptVar*>(var.release());
+            if(v->ty != A_var::type::SUBSCRIPT) {
+                std:: cerr << "in line " << v->pos << ":" << std::endl;
+                std:: cerr << "parser: array exp expect format 'typename[size] of initialexp'." << std::endl;
+            }
+            auto e = exp();
+            auto primev = dynamic_cast<A_SimpleVar*>(v->var.release());
+            if(primev->ty != A_var::type::SIMPLE) {
+                std:: cerr << "in line " << v->pos << ":" << std::endl;
+                std:: cerr << "parser: array exp expect format 'typename[size] of initialexp'." << std::endl;
+            }
+            return std::make_unique<A_ArrayExp>(v->pos, primev->sym, v->exp.release(), e.release());
+        }
     default:
         unuse(t);
         break;
