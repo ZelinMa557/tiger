@@ -197,7 +197,9 @@ void print_dec(A_dec* dec, int front_space) {
     case A_dec::type::TYDS:
         {
             auto d = dynamic_cast<A_TypeDec*>(dec);
-
+            cout << "TypeDec(" << endl;
+            print_nametyList(d->type.release(), front_space+4);
+            cout << ")";
         }
         break;
     }
@@ -269,6 +271,42 @@ void print_nametyList(A_nametyList* tyList, int front_space) {
         print_namety(tyList->head.release(), front_space+4);
         cout << ",(" << endl;
         tyList = tyList->tail.release();
+    }
+    cout << ")";
+}
+
+void print_funcdec(A_funcdec* func, int front_space) {
+    space(front_space);
+    cout << "funcdec(Symbol(" << func->name << ")," << endl;
+    print_fieldList(func->params.release(), front_space+4);
+    cout << ")";
+}
+
+void print_funcdecList(A_funcdecList* funcList, int front_space) {
+    space(front_space+4);
+    cout << "funcdecList(" << endl;
+    while(funcList != nullptr && funcList->head != nullptr) {
+        print_funcdec(funcList->head.release(), front_space+4);
+        cout << "," << endl;
+        funcList = funcList->tail.release();
+    }
+    cout << ")";
+}
+
+void print_efield(A_efield* efield, int front_space) {
+    space(front_space);
+    cout << "Efield((Symbol(" << efield->name << ")," << endl;
+    print_exp(efield->exp.release(), front_space+4);
+    cout << ")";
+}
+
+void print_efieldList(A_efieldList* efieldList, int front_space) {
+    space(front_space);
+    cout << "EfieldList(" << endl;
+    while(efieldList != nullptr && efieldList->head != nullptr) {
+        print_efield(efieldList->head.release(), front_space+4);
+        cout << "," << endl;
+        efieldList = efieldList->tail.release();
     }
     cout << ")";
 }
