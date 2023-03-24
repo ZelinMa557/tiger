@@ -125,7 +125,7 @@ void print_exp(A_exp* exp, int front_space) {
     case A_exp::type::StringExp:
         {
             auto e = dynamic_cast<A_StringExp*>(exp);
-            cout << "IntExp(\"" << e->s <<  "\")";
+            cout << "StringExp(\"" << e->s <<  "\")";
         }
     default:
         break;
@@ -134,7 +134,7 @@ void print_exp(A_exp* exp, int front_space) {
 
 void print_expList(A_expList *expList, int front_space) {
     space(front_space);
-    cout << "ExpList(";
+    cout << "ExpList(" << endl;
     while(expList != nullptr && expList->head != nullptr) {
         print_exp(expList->head.release(), front_space+4);
         cout << "," << endl;
@@ -213,6 +213,7 @@ void print_decList(A_decList* decList, int front_space) {
         cout << "," << endl;
         decList = decList->tail.release();
     }
+    space(front_space);
     cout << ")";
 }
 
@@ -254,6 +255,7 @@ void print_fieldList(A_fieldList* fieldList, int front_space) {
         cout << "," << endl;
         fieldList = fieldList->tail.release();
     }
+    space(front_space);
     cout << ")";
 }
 
@@ -269,9 +271,10 @@ void print_nametyList(A_nametyList* tyList, int front_space) {
     cout << "nametyList(" << endl;
     while(tyList != nullptr && tyList->head != nullptr) {
         print_namety(tyList->head.release(), front_space+4);
-        cout << ",(" << endl;
+        cout << "," << endl;
         tyList = tyList->tail.release();
     }
+    space(front_space);
     cout << ")";
 }
 
@@ -283,13 +286,14 @@ void print_funcdec(A_funcdec* func, int front_space) {
 }
 
 void print_funcdecList(A_funcdecList* funcList, int front_space) {
-    space(front_space+4);
+    space(front_space);
     cout << "funcdecList(" << endl;
     while(funcList != nullptr && funcList->head != nullptr) {
         print_funcdec(funcList->head.release(), front_space+4);
         cout << "," << endl;
         funcList = funcList->tail.release();
     }
+    space(front_space);
     cout << ")";
 }
 
@@ -308,5 +312,6 @@ void print_efieldList(A_efieldList* efieldList, int front_space) {
         cout << "," << endl;
         efieldList = efieldList->tail.release();
     }
+    space(front_space);
     cout << ")";
 }
