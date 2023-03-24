@@ -59,6 +59,19 @@ std::unique_ptr<A_dec> parser::dec() {
                 auto list = std::make_unique<A_funcdecList>(std::move(func), nullptr);
                 return std::make_unique<A_FunctionDec>(func_name.line, std::move(list));
             }
+            else if(next.type == COLON) {
+                auto id = eat(IDENTIFIER);
+                eat(EQ);
+                auto e = exp();
+                auto func = std::make_unique<A_funcdec>(t.line, func_name.val, std::move(list), id.val, std::move(e));
+                auto list = std::make_unique<A_funcdecList>(std::move(func), nullptr);
+                return std::make_unique<A_FunctionDec>(func_name.line, std::move(list));
+            }
+            else {
+                std::cerr << "in line " << next.line << ":" << std::endl;
+                std::cerr << "parser: expected EQ or COLON, but got " << next.to_str() << std::endl;
+                exit(1);
+            }
         }
     default:
         unuse(t);
