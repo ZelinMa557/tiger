@@ -213,6 +213,7 @@ public:
     A_pos pos;
     type ty;
     A_ty(A_pos p, type t) : pos(p), ty(t) {};
+    virtual ~A_ty() {};
 };
 
 struct A_NameTy : public A_ty {

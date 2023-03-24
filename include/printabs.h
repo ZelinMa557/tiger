@@ -2,9 +2,9 @@
 #include "abstract.h"
 void space(int n);
 void print_exp(A_exp* exp, int front_space);
-void print_expList(A_expList *A_expList, int front_space);
+void print_expList(A_expList *expList, int front_space);
 void print_var(A_var* var, int front_space);
-void print_dec(A_dec*, int front_space);
+void print_dec(A_dec* dec, int front_space);
 void print_decList(A_decList* decList, int front_space);
 void print_ty(A_ty* ty, int front_space);
 void print_field(A_field* ty, int front_space);

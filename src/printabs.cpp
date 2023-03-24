@@ -15,7 +15,11 @@ void print_exp(A_exp* exp, int front_space) {
     case A_exp::type::ArrayExp: 
         {
             auto e = dynamic_cast<A_ArrayExp*>(exp);
-            // todo
+            cout << "ArrayExp(Symbol(" << e->type << ")," << endl;
+            print_exp(e->size.release(), front_space+4);
+            cout << "," << endl;
+            print_exp(e->init.release(), front_space+4);
+            cout << ")" << endl;
         }
         break;
     case A_exp::type::AssignExp:
@@ -126,4 +130,145 @@ void print_exp(A_exp* exp, int front_space) {
     default:
         break;
     }
+}
+
+void print_expList(A_expList *expList, int front_space) {
+    space(front_space);
+    cout << "ExpList(";
+    while(expList != nullptr && expList->head != nullptr) {
+        print_exp(expList->head.release(), front_space+4);
+        cout << "," << endl;
+        expList = expList->tail.release();
+    }
+    space(front_space);
+    cout << ")";
+}
+
+void print_var(A_var* var, int front_space) {
+    space(front_space);
+    switch(var->ty) {
+    case A_var::type::SIMPLE:
+        {
+            auto v = dynamic_cast<A_SimpleVar*>(var);
+            cout << "SimpleVar(Symbol(" << v->sym << ")";
+        }
+        break;
+    case A_var::type::FIELD:
+        {
+            auto v = dynamic_cast<A_FieldVar*>(var);
+            cout << "FieldVar(" << endl;
+            print_var(v->var.release(), front_space+4);
+            cout << "," << endl;
+            space(front_space);
+            cout << "Symbol(" << v->sym << "))";
+        }
+        break;
+    case A_var::type::SUBSCRIPT:
+        {
+            auto v = dynamic_cast<A_SubscriptVar*>(var);
+            cout << "SubscriptVar(" << endl;
+            print_var(v->var.release(), front_space+4);
+            cout << "," << endl;
+            print_exp(v->exp.release(), front_space+4);
+            cout << endl;
+        }
+    }
+}
+
+void print_dec(A_dec* dec, int front_space) {
+    space(front_space);
+    switch(dec->ty) {
+    case A_dec::type::VARD:
+        {
+            auto d = dynamic_cast<A_VarDec*>(dec);
+            cout << "VarDec(Symbol(" << d->var << "),Symbol(" << d->type << ")," << endl;
+            print_exp(d->init.release(), front_space+4);
+            cout << ")";
+        }
+        break;
+    case A_dec::type::FUNCDS:
+        {
+            cout << "FunctionDec(" << endl;
+            auto d = dynamic_cast<A_FunctionDec*>(dec);
+            print_funcdecList(d->function.release(), front_space+4);
+            cout << ")";
+        }
+        break;
+    case A_dec::type::TYDS:
+        {
+            auto d = dynamic_cast<A_TypeDec*>(dec);
+
+        }
+        break;
+    }
+}
+
+void print_decList(A_decList* decList, int front_space) {
+    space(front_space);
+    cout << "DecList(" << endl;
+    while(decList != nullptr && decList->head != nullptr) {
+        print_dec(decList->head.release(), front_space+4);
+        cout << "," << endl;
+        decList = decList->tail.release();
+    }
+    cout << ")";
+}
+
+void print_ty(A_ty* ty, int front_space) {
+    space(front_space);
+    switch(ty->ty) {
+    case A_ty::type::NameTy:
+        {
+            auto t = dynamic_cast<A_NameTy*>(ty);
+            cout << "NameTy(Symbol(" << t->type << "))";
+        }
+        break;
+    case A_ty::type::ArrayTy:
+        {
+            auto t = dynamic_cast<A_ArrayTy*>(ty);
+            cout << "ArrayTy(Symbol(" << t->array << "))";
+        }
+        break;
+    case A_ty::type::RecordTy:
+        {
+            auto t = dynamic_cast<A_RecordTy*>(ty);
+            cout << "RecordTy(" << endl;
+            print_fieldList(t->record.release(), front_space+4);
+        }
+        break;
+    }
+}
+
+void print_field(A_field* ty, int front_space) {
+    space(front_space);
+    cout << "Field(Symbol(" << ty->name << "),Symbol(" << ty->type << "))";
+}
+
+void print_fieldList(A_fieldList* fieldList, int front_space) {
+    space(front_space);
+    cout << "FieldList(" << endl;
+    while(fieldList != nullptr && fieldList->head != nullptr) {
+        print_field(fieldList->head.release(), front_space+4);
+        cout << "," << endl;
+        fieldList = fieldList->tail.release();
+    }
+    cout << ")";
+}
+
+void print_namety(A_namety* ty, int front_space) {
+    space(front_space);
+    cout << "namety(Symbol(" << ty->name << ")," << endl;
+    print_ty(ty->ty.release(), front_space+4);
+    cout << ")";
+}
+
+void print_nametyList(A_nametyList* tyList, int front_space) {
+    space(front_space);
+    cout << "nametyList(" << endl;
+    while(tyList != nullptr && tyList->head != nullptr) {
+        print_namety(tyList->head.release(), front_space+4);
+        cout << ",(" << endl;
+        tyList = tyList->tail.release();
+    }
+    cout << ")";
 }
