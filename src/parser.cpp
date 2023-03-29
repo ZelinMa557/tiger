@@ -319,13 +319,14 @@ std::unique_ptr<A_exp> parser::valexp() {
         }
         break;
     default:
+        unuse(t);
         break;
     }
-    return lval(t);
+    return lval();
 }
 
-std::unique_ptr<A_exp> parser::lval(token &t) {
-    token identifier = eat(IDENTIFIER);
+std::unique_ptr<A_exp> parser::lval() {
+    token t = eat(IDENTIFIER);
     auto var = std::make_unique<A_SimpleVar>(t.line, t.val);
     return idexp(std::move(var));
 }
@@ -410,7 +411,7 @@ std::unique_ptr<A_exp> parser::seqexp() {
         std::unique_ptr<A_expList> tail(std::move(list));
         list.reset(new A_expList(std::move(e), std::move(tail)));
         token t = tok();
-        if(t.type == COMMA)
+        if(t.type == SEMICOLON)
             continue;
         unuse(t);
         break;

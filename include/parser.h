@@ -26,7 +26,7 @@ private:
     std::unique_ptr<A_exp> mulexp_(int &ty);
     std::unique_ptr<A_exp> subexp();
     std::unique_ptr<A_exp> valexp();
-    std::unique_ptr<A_exp> lval(token &t);
+    std::unique_ptr<A_exp> lval();
     std::unique_ptr<A_exp> idexp(std::unique_ptr<A_var> var);
     std::unique_ptr<A_efieldList> efield_list();
     std::unique_ptr<A_efieldList> efield_list_(std::unique_ptr<A_efieldList> cur);

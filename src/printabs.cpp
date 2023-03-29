@@ -8,6 +8,7 @@ void space(int n) {
 }
 
 void print_exp(A_exp* exp, int front_space) {
+    if(exp == nullptr) return;
     space(front_space);
     switch (exp->ty)
     {
@@ -19,7 +20,7 @@ void print_exp(A_exp* exp, int front_space) {
             print_exp(e->size.release(), front_space+4);
             cout << "," << endl;
             print_exp(e->init.release(), front_space+4);
-            cout << ")" << endl;
+            cout << ")";
         }
         break;
     case A_exp::type::AssignExp:
@@ -127,6 +128,25 @@ void print_exp(A_exp* exp, int front_space) {
             auto e = dynamic_cast<A_StringExp*>(exp);
             cout << "StringExp(\"" << e->s <<  "\")";
         }
+        break;
+    case A_exp::type::WhileExp:
+        {
+            auto e = dynamic_cast<A_WhileExp*>(exp);
+            cout << "WhileExp(" << endl;
+            print_exp(e->test.release(), front_space+4);
+            cout << "," << endl;
+            print_exp(e->body.release(), front_space+4);
+            cout << ")";
+        }
+        break;
+    case A_exp::type::VarExp:
+        {
+            auto e = dynamic_cast<A_VarExp*>(exp);
+            cout << "VarExp(" << endl;
+            print_var(e->var.release(), front_space+4);
+            cout << ")";
+        }
+        break;
     default:
         break;
     }
@@ -150,7 +170,7 @@ void print_var(A_var* var, int front_space) {
     case A_var::type::SIMPLE:
         {
             auto v = dynamic_cast<A_SimpleVar*>(var);
-            cout << "SimpleVar(Symbol(" << v->sym << ")";
+            cout << "SimpleVar(Symbol(" << v->sym << "))";
         }
         break;
     case A_var::type::FIELD:
