@@ -266,6 +266,7 @@ std::unique_ptr<A_exp> parser::addexp_(int &ty) {
         unuse(t);
         return nullptr;
     }
+    ty = t.type;
     return addexp();
 }
 
@@ -287,6 +288,7 @@ std::unique_ptr<A_exp> parser::mulexp_(int &ty) {
         unuse(t);
         return nullptr;
     }
+    ty = t.type;
     return mulexp();
 }
 
@@ -348,6 +350,7 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
             if(t.type == R_SMALL) {
                 return std::make_unique<A_CallExp>(var->pos, func->sym, nullptr);
             }
+            unuse(t);
             std::unique_ptr<A_expList> list(nullptr);
             while(true) {
                 auto e = exp();
@@ -403,6 +406,12 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
 }
 
 std::unique_ptr<A_exp> parser::seqexp() {
+    token t = tok();
+    if(t.type == R_SMALL) {
+        unuse(t);
+        return nullptr;
+    }
+    unuse(t);
     std::unique_ptr<A_expList> list(nullptr);
     A_pos p = 0;
     while(true) {
@@ -433,7 +442,7 @@ std::unique_ptr<A_efieldList> parser::efield_list() {
 
 std::unique_ptr<A_efieldList> parser::efield_list_(std::unique_ptr<A_efieldList> cur) {
     token expected_com = tok();
-    if(expected_com.type != IDENTIFIER) {
+    if(expected_com.type != COMMA) {
         unuse(expected_com);
         return cur;
     }
