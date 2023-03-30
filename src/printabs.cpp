@@ -179,7 +179,7 @@ void print_var(A_var* var, int front_space) {
             cout << "FieldVar(" << endl;
             print_var(v->var.release(), front_space+4);
             cout << "," << endl;
-            space(front_space);
+            space(front_space+4);
             cout << "Symbol(" << v->sym << "))";
         }
         break;
