@@ -167,7 +167,7 @@ std::unique_ptr<A_exp> parser::assignexp() {
         exit(1);
     }
     auto varexp = dynamic_cast<A_VarExp*>(o.release());
-    return std::make_unique<A_AssignExp>(o->pos, std::move(varexp->var), std::move(a));
+    return std::make_unique<A_AssignExp>(varexp->pos, std::move(varexp->var), std::move(a));
 }
 
 std::unique_ptr<A_exp> parser::assignexp_() {
@@ -348,7 +348,7 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
             std::unique_ptr<A_SimpleVar> func(dynamic_cast<A_SimpleVar*>(var.release()));
             token t = tok();
             if(t.type == R_SMALL) {
-                return std::make_unique<A_CallExp>(var->pos, func->sym, nullptr);
+                return std::make_unique<A_CallExp>(func->pos, func->sym, nullptr);
             }
             unuse(t);
             std::unique_ptr<A_expList> list(nullptr);
@@ -365,7 +365,7 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
                     exit(1);
                 }
             }
-            return std::make_unique<A_CallExp>(var->pos, func->sym, std::move(list));
+            return std::make_unique<A_CallExp>(func->pos, func->sym, std::move(list));
         }
         break;
     case L_MID:
@@ -409,7 +409,7 @@ std::unique_ptr<A_exp> parser::seqexp() {
     token t = tok();
     if(t.type == R_SMALL) {
         unuse(t);
-        return nullptr;
+        return std::make_unique<A_SeqExp>(t.line, nullptr);
     }
     unuse(t);
     std::unique_ptr<A_expList> list(nullptr);
