@@ -155,7 +155,7 @@ public:
     std::unique_ptr<A_exp> hi;
     std::unique_ptr<A_exp> body;
     A_ForExp(A_pos p, S_symbol var_, std::unique_ptr<A_exp> lo_, std::unique_ptr<A_exp> hi_, std::unique_ptr<A_exp> body_) :
-        A_exp(p, type::ForExp), var(var), lo(std::move(lo_)), hi(std::move(hi_)), body(std::move(body_)) {};
+        A_exp(p, type::ForExp), var(var_), lo(std::move(lo_)), hi(std::move(hi_)), body(std::move(body_)) {};
 };
 
 struct A_LetExp : public A_exp {
