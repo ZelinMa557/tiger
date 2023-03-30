@@ -110,7 +110,7 @@ void print_exp(A_exp* exp, int front_space) {
     case A_exp::type::RecordExp:
         {
             auto e = dynamic_cast<A_RecordExp*>(exp);
-            cout << "RecordExp(Symbol(" << e->type << "),";
+            cout << "RecordExp(Symbol(" << e->type << ")," << endl;
             print_efieldList(e->fields.release(), front_space+4);
             cout << ")";
         }
@@ -190,7 +190,7 @@ void print_var(A_var* var, int front_space) {
             print_var(v->var.release(), front_space+4);
             cout << "," << endl;
             print_exp(v->exp.release(), front_space+4);
-            cout << endl;
+            cout << ")";
         }
     }
 }
@@ -257,6 +257,7 @@ void print_ty(A_ty* ty, int front_space) {
             auto t = dynamic_cast<A_RecordTy*>(ty);
             cout << "RecordTy(" << endl;
             print_fieldList(t->record.release(), front_space+4);
+            cout << ")";
         }
         break;
     }
@@ -319,7 +320,7 @@ void print_funcdecList(A_funcdecList* funcList, int front_space) {
 
 void print_efield(A_efield* efield, int front_space) {
     space(front_space);
-    cout << "Efield((Symbol(" << efield->name << ")," << endl;
+    cout << "Efield(Symbol(" << efield->name << ")," << endl;
     print_exp(efield->exp.release(), front_space+4);
     cout << ")";
 }
