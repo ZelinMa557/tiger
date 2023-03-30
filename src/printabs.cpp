@@ -301,8 +301,10 @@ void print_nametyList(A_nametyList* tyList, int front_space) {
 
 void print_funcdec(A_funcdec* func, int front_space) {
     space(front_space);
-    cout << "funcdec(Symbol(" << func->name << ")," << endl;
+    cout << "funcdec(Symbol(" << func->name << "),Symbol(" << func->result << ")," << endl;
     print_fieldList(func->params.release(), front_space+4);
+    cout << "," << endl;
+    print_exp(func->body.release(), front_space+4);
     cout << ")";
 }
 

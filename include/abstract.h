@@ -91,7 +91,7 @@ public:
     S_symbol func;
     std::unique_ptr<A_expList> args;
     A_CallExp(A_pos p, S_symbol func_, std::unique_ptr<A_expList> args_) :
-                A_exp(p, type::CallExp), func(func_), args(std::move(args)) {};
+                A_exp(p, type::CallExp), func(func_), args(std::move(args_)) {};
 };
 
 struct A_OpExp : public A_exp {

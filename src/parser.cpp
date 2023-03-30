@@ -351,11 +351,10 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
                 return std::make_unique<A_CallExp>(func->pos, func->sym, nullptr);
             }
             unuse(t);
-            std::unique_ptr<A_expList> list(nullptr);
+            std::vector<std::unique_ptr<A_exp>> vec;
             while(true) {
                 auto e = exp();
-                std::unique_ptr<A_expList> tail(std::move(list));
-                list.reset(new A_expList(std::move(e), std::move(tail)));
+                vec.push_back(std::move(e));
                 token t = tok();
                 if(t.type == R_SMALL)
                     break;
@@ -364,6 +363,11 @@ std::unique_ptr<A_exp> parser::idexp(std::unique_ptr<A_var> var) {
                     std::cerr << "parser: expected ')' or ',' but got " << t.to_str() << std::endl;
                     exit(1);
                 }
+            }
+            std::unique_ptr<A_expList> list(nullptr);
+            for(int i = vec.size()-1; i >= 0; i--) {
+                std::unique_ptr<A_expList> tail(list.release());
+                list.reset(new A_expList(std::move(vec[i]), std::move(tail)));
             }
             return std::make_unique<A_CallExp>(func->pos, func->sym, std::move(list));
         }
