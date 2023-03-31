@@ -185,7 +185,7 @@ std::unique_ptr<A_exp> parser::orexp() {
     if(o == nullptr)
         return a;
     std::unique_ptr<A_exp> one_exp(new A_IntExp(a->pos, 1));
-    return std::unique_ptr<A_exp>(new A_IfExp(a->pos, std::move(a), std::move(o), std::move(one_exp)));
+    return std::unique_ptr<A_exp>(new A_IfExp(a->pos, std::move(a), std::move(one_exp), std::move(o)));
 }
 
 std::unique_ptr<A_exp> parser::orexp_() {
