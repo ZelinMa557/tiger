@@ -8,8 +8,8 @@ void space(int n) {
 }
 
 void print_exp(A_exp* exp, int front_space) {
-    if(exp == nullptr) return;
     space(front_space);
+    if(exp == nullptr) return;
     switch (exp->ty)
     {
     case A_exp::type::NilExp: cout << "NilExp()"; break;
