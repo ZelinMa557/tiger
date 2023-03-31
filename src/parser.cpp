@@ -437,57 +437,67 @@ std::unique_ptr<A_exp> parser::seqexp() {
 }
 
 std::unique_ptr<A_efieldList> parser::efield_list() {
-    token expected_id = tok();
-    if(expected_id.type != IDENTIFIER) {
-        unuse(expected_id);
-        return nullptr;
+    token t = tok();
+    if(t.type == R_BIG) {
+        unuse(t);
+        return std::make_unique<A_efieldList>(nullptr, nullptr);
     }
-    eat(EQ);
-    auto e = exp();
-    std::unique_ptr<A_efield> field(new A_efield(expected_id.val, std::move(e)));
-    std::unique_ptr<A_efieldList> cur(new A_efieldList(std::move(field), nullptr));
-    return efield_list_(std::move(cur));
+    unuse(t);
+    std::vector<std::unique_ptr<A_efield>> vec;
+    while(true) {
+        auto ef = efield();
+        vec.push_back(std::move(ef));
+        token t = tok();
+        if(t.type == COMMA)
+            continue;
+        unuse(t);
+        break;
+    }
+    std::unique_ptr<A_efieldList> list(nullptr);
+    for(int i = vec.size()-1; i >= 0; i--) {
+        std::unique_ptr<A_efieldList> tail(list.release());
+        list.reset(new A_efieldList(std::move(vec[i]), std::move(tail)));
+    }
+    return list;
 }
 
-std::unique_ptr<A_efieldList> parser::efield_list_(std::unique_ptr<A_efieldList> cur) {
-    token expected_com = tok();
-    if(expected_com.type != COMMA) {
-        unuse(expected_com);
-        return cur;
-    }
+std::unique_ptr<A_efield> parser::efield() {
     token id = eat(IDENTIFIER);
     eat(EQ);
     auto e = exp();
-    std::unique_ptr<A_efield> field(new A_efield(id.val, std::move(e)));
-    std::unique_ptr<A_efieldList> next(new A_efieldList(std::move(field), std::move(cur)));
-    return efield_list_(std::move(next));
+    return std::make_unique<A_efield>(id.val, std::move(e));
 }
 
 std::unique_ptr<A_fieldList> parser::field_list() {
-    token name = tok();
-    if(name.type != IDENTIFIER) {
-        unuse(name);
-        return nullptr;
+    token t = tok();
+    if(t.type == R_BIG || t.type == R_SMALL) {
+        unuse(t);
+        return std::make_unique<A_fieldList>(nullptr, nullptr);
     }
-    eat(COLON);
-    token type = eat(IDENTIFIER);
-    std::unique_ptr<A_field> field(new A_field(name.line, type.val, name.val));
-    auto cur = std::make_unique<A_fieldList>(std::move(field), nullptr);
-    return field_list_(std::move(cur));
+    unuse(t);
+    std::vector<std::unique_ptr<A_field>> vec;
+    while(true) {
+        auto f = field();
+        vec.push_back(std::move(f));
+        token t = tok();
+        if(t.type == COMMA)
+            continue;
+        unuse(t);
+        break;
+    }
+    std::unique_ptr<A_fieldList> list(nullptr);
+    for(int i = vec.size()-1; i >= 0; i--) {
+        std::unique_ptr<A_fieldList> tail(list.release());
+        list.reset(new A_fieldList(std::move(vec[i]), std::move(tail)));
+    }
+    return list;
 }
 
-std::unique_ptr<A_fieldList> parser::field_list_(std::unique_ptr<A_fieldList> cur) {
-    token comma = tok();
-    if(comma.type != COMMA) {
-        unuse(comma);
-        return cur;
-    }
+std::unique_ptr<A_field> parser::field() {
     token name = eat(IDENTIFIER);
     eat(COLON);
     token type = eat(IDENTIFIER);
-    std::unique_ptr<A_field> field(new A_field(name.line, type.val, name.val));
-    auto next = std::make_unique<A_fieldList>(std::move(field), std::move(cur));
-    return field_list_(std::move(next));
+    return std::make_unique<A_field>(name.line, type.val, name.val);
 }
 
 std::unique_ptr<A_ty> parser::ty() {
