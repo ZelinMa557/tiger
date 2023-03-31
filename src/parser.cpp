@@ -416,21 +416,26 @@ std::unique_ptr<A_exp> parser::seqexp() {
         return std::make_unique<A_SeqExp>(t.line, nullptr);
     }
     unuse(t);
-    std::unique_ptr<A_expList> list(nullptr);
+    std::vector<std::unique_ptr<A_exp>> vec;
     A_pos p = 0;
     while(true) {
         auto e = exp();
         p = e->pos;
-        std::unique_ptr<A_expList> tail(std::move(list));
-        list.reset(new A_expList(std::move(e), std::move(tail)));
+        vec.push_back(std::move(e));
         token t = tok();
         if(t.type == SEMICOLON)
             continue;
         unuse(t);
         break;
     }
+    std::unique_ptr<A_expList> list(nullptr);
+    for(int i = vec.size()-1; i >= 0; i--) {
+        std::unique_ptr<A_expList> tail(list.release());
+        list.reset(new A_expList(std::move(vec[i]), std::move(tail)));
+    }
     return std::make_unique<A_SeqExp>(p, std::move(list));
 }
+
 std::unique_ptr<A_efieldList> parser::efield_list() {
     token expected_id = tok();
     if(expected_id.type != IDENTIFIER) {
