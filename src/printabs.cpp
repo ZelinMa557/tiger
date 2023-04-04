@@ -17,9 +17,9 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_ArrayExp*>(exp);
             cout << "ArrayExp(Symbol(" << e->type << ")," << endl;
-            print_exp(e->size.release(), front_space+4);
+            print_exp(e->size, front_space+4);
             cout << "," << endl;
-            print_exp(e->init.release(), front_space+4);
+            print_exp(e->init, front_space+4);
             cout << ")";
         }
         break;
@@ -27,9 +27,9 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_AssignExp*>(exp);
             cout << "AssignExp(" << endl;
-            print_var(e->var.release(), front_space+4);
+            print_var(e->var, front_space+4);
             cout << "," << endl;
-            print_exp(e->exp.release(), front_space+4);
+            print_exp(e->exp, front_space+4);
             cout << ")";
         }
         break;
@@ -39,7 +39,7 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_CallExp*>(exp);
             cout << "CallExp(Symbol(" << e->func << ")," << endl;
-            print_expList(e->args.release(), front_space+4);
+            print_expList(e->args, front_space+4);
             cout << ")";
         }
         break;
@@ -47,11 +47,11 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_ForExp*>(exp);
             cout << "ForExp(Symbol(" << e->var << ")," << endl;
-            print_exp(e->lo.release(), front_space+4);
+            print_exp(e->lo, front_space+4);
             cout << "," << endl;
-            print_exp(e->hi.release(), front_space+4);
+            print_exp(e->hi, front_space+4);
             cout << "," << endl;
-            print_exp(e->body.release(), front_space+4);
+            print_exp(e->body, front_space+4);
             cout << ")";
         }
         break;
@@ -59,11 +59,11 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_IfExp*>(exp);
             cout << "IfExp(" << endl;
-            print_exp(e->test.release(), front_space+4);
+            print_exp(e->test, front_space+4);
             cout << "," << endl;
-            print_exp(e->then.release(), front_space+4);
+            print_exp(e->then, front_space+4);
             cout << "," << endl;
-            print_exp(e->elsee.release(), front_space+4);
+            print_exp(e->elsee, front_space+4);
             cout << ")";
         }
         break;
@@ -77,9 +77,9 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_LetExp*>(exp);
             cout << "LetExp(" << endl;
-            print_decList(e->decs.release(), front_space+4);
+            print_decList(e->decs, front_space+4);
             cout << "," << endl;
-            print_exp(e->body.release(), front_space+4);
+            print_exp(e->body, front_space+4);
             cout << ")";
         }
         break;
@@ -101,9 +101,9 @@ void print_exp(A_exp* exp, int front_space) {
             case A_oper::A_timesOp: cout << "MUL"; break;
             }
             cout << ")," << endl;
-            print_exp(e->left.release(), front_space+4);
+            print_exp(e->left, front_space+4);
             cout << "," << endl;
-            print_exp(e->right.release(), front_space+4);
+            print_exp(e->right, front_space+4);
             cout << ")";
         }
         break;
@@ -111,7 +111,7 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_RecordExp*>(exp);
             cout << "RecordExp(Symbol(" << e->type << ")," << endl;
-            print_efieldList(e->fields.release(), front_space+4);
+            print_efieldList(e->fields, front_space+4);
             cout << ")";
         }
         break;
@@ -119,7 +119,7 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_SeqExp*>(exp);
             cout << "SeqExp(" << endl;
-            print_expList(e->seq.release(), front_space+4);
+            print_expList(e->seq, front_space+4);
             cout << ")";
         }
         break;
@@ -133,9 +133,9 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_WhileExp*>(exp);
             cout << "WhileExp(" << endl;
-            print_exp(e->test.release(), front_space+4);
+            print_exp(e->test, front_space+4);
             cout << "," << endl;
-            print_exp(e->body.release(), front_space+4);
+            print_exp(e->body, front_space+4);
             cout << ")";
         }
         break;
@@ -143,7 +143,7 @@ void print_exp(A_exp* exp, int front_space) {
         {
             auto e = dynamic_cast<A_VarExp*>(exp);
             cout << "VarExp(" << endl;
-            print_var(e->var.release(), front_space+4);
+            print_var(e->var, front_space+4);
             cout << ")";
         }
         break;
@@ -156,9 +156,9 @@ void print_expList(A_expList *expList, int front_space) {
     space(front_space);
     cout << "ExpList(" << endl;
     while(expList != nullptr && expList->head != nullptr) {
-        print_exp(expList->head.release(), front_space+4);
+        print_exp(expList->head, front_space+4);
         cout << "," << endl;
-        expList = expList->tail.release();
+        expList = expList->tail;
     }
     space(front_space);
     cout << ")";
@@ -177,7 +177,7 @@ void print_var(A_var* var, int front_space) {
         {
             auto v = dynamic_cast<A_FieldVar*>(var);
             cout << "FieldVar(" << endl;
-            print_var(v->var.release(), front_space+4);
+            print_var(v->var, front_space+4);
             cout << "," << endl;
             space(front_space+4);
             cout << "Symbol(" << v->sym << "))";
@@ -187,9 +187,9 @@ void print_var(A_var* var, int front_space) {
         {
             auto v = dynamic_cast<A_SubscriptVar*>(var);
             cout << "SubscriptVar(" << endl;
-            print_var(v->var.release(), front_space+4);
+            print_var(v->var, front_space+4);
             cout << "," << endl;
-            print_exp(v->exp.release(), front_space+4);
+            print_exp(v->exp, front_space+4);
             cout << ")";
         }
     }
@@ -202,7 +202,7 @@ void print_dec(A_dec* dec, int front_space) {
         {
             auto d = dynamic_cast<A_VarDec*>(dec);
             cout << "VarDec(Symbol(" << d->var << "),Symbol(" << d->type << ")," << endl;
-            print_exp(d->init.release(), front_space+4);
+            print_exp(d->init, front_space+4);
             cout << ")";
         }
         break;
@@ -210,7 +210,7 @@ void print_dec(A_dec* dec, int front_space) {
         {
             cout << "FunctionDec(" << endl;
             auto d = dynamic_cast<A_FunctionDec*>(dec);
-            print_funcdecList(d->function.release(), front_space+4);
+            print_funcdecList(d->function, front_space+4);
             cout << ")";
         }
         break;
@@ -218,7 +218,7 @@ void print_dec(A_dec* dec, int front_space) {
         {
             auto d = dynamic_cast<A_TypeDec*>(dec);
             cout << "TypeDec(" << endl;
-            print_nametyList(d->type.release(), front_space+4);
+            print_nametyList(d->type, front_space+4);
             cout << ")";
         }
         break;
@@ -229,9 +229,9 @@ void print_decList(A_decList* decList, int front_space) {
     space(front_space);
     cout << "DecList(" << endl;
     while(decList != nullptr && decList->head != nullptr) {
-        print_dec(decList->head.release(), front_space+4);
+        print_dec(decList->head, front_space+4);
         cout << "," << endl;
-        decList = decList->tail.release();
+        decList = decList->tail;
     }
     space(front_space);
     cout << ")";
@@ -256,7 +256,7 @@ void print_ty(A_ty* ty, int front_space) {
         {
             auto t = dynamic_cast<A_RecordTy*>(ty);
             cout << "RecordTy(" << endl;
-            print_fieldList(t->record.release(), front_space+4);
+            print_fieldList(t->record, front_space+4);
             cout << ")";
         }
         break;
@@ -272,9 +272,9 @@ void print_fieldList(A_fieldList* fieldList, int front_space) {
     space(front_space);
     cout << "FieldList(" << endl;
     while(fieldList != nullptr && fieldList->head != nullptr) {
-        print_field(fieldList->head.release(), front_space+4);
+        print_field(fieldList->head, front_space+4);
         cout << "," << endl;
-        fieldList = fieldList->tail.release();
+        fieldList = fieldList->tail;
     }
     space(front_space);
     cout << ")";
@@ -283,7 +283,7 @@ void print_fieldList(A_fieldList* fieldList, int front_space) {
 void print_namety(A_namety* ty, int front_space) {
     space(front_space);
     cout << "namety(Symbol(" << ty->name << ")," << endl;
-    print_ty(ty->ty.release(), front_space+4);
+    print_ty(ty->ty, front_space+4);
     cout << ")";
 }
 
@@ -291,9 +291,9 @@ void print_nametyList(A_nametyList* tyList, int front_space) {
     space(front_space);
     cout << "nametyList(" << endl;
     while(tyList != nullptr && tyList->head != nullptr) {
-        print_namety(tyList->head.release(), front_space+4);
+        print_namety(tyList->head, front_space+4);
         cout << "," << endl;
-        tyList = tyList->tail.release();
+        tyList = tyList->tail;
     }
     space(front_space);
     cout << ")";
@@ -302,9 +302,9 @@ void print_nametyList(A_nametyList* tyList, int front_space) {
 void print_funcdec(A_funcdec* func, int front_space) {
     space(front_space);
     cout << "funcdec(Symbol(" << func->name << "),Symbol(" << func->result << ")," << endl;
-    print_fieldList(func->params.release(), front_space+4);
+    print_fieldList(func->params, front_space+4);
     cout << "," << endl;
-    print_exp(func->body.release(), front_space+4);
+    print_exp(func->body, front_space+4);
     cout << ")";
 }
 
@@ -312,9 +312,9 @@ void print_funcdecList(A_funcdecList* funcList, int front_space) {
     space(front_space);
     cout << "funcdecList(" << endl;
     while(funcList != nullptr && funcList->head != nullptr) {
-        print_funcdec(funcList->head.release(), front_space+4);
+        print_funcdec(funcList->head, front_space+4);
         cout << "," << endl;
-        funcList = funcList->tail.release();
+        funcList = funcList->tail;
     }
     space(front_space);
     cout << ")";
@@ -323,7 +323,7 @@ void print_funcdecList(A_funcdecList* funcList, int front_space) {
 void print_efield(A_efield* efield, int front_space) {
     space(front_space);
     cout << "Efield(Symbol(" << efield->name << ")," << endl;
-    print_exp(efield->exp.release(), front_space+4);
+    print_exp(efield->exp, front_space+4);
     cout << ")";
 }
 
@@ -331,9 +331,9 @@ void print_efieldList(A_efieldList* efieldList, int front_space) {
     space(front_space);
     cout << "EfieldList(" << endl;
     while(efieldList != nullptr && efieldList->head != nullptr) {
-        print_efield(efieldList->head.release(), front_space+4);
+        print_efield(efieldList->head, front_space+4);
         cout << "," << endl;
-        efieldList = efieldList->tail.release();
+        efieldList = efieldList->tail;
     }
     space(front_space);
     cout << ")";

@@ -12,6 +12,6 @@ int main(int argc, char **argv) {
     string file_name(argv[1]);
     parser p(file_name);
     auto abs = p.parse();
-    print_exp(abs.release(), 0);
+    print_exp(abs, 0);
     return 0;
 }
