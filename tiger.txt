@@ -1,5 +1,4 @@
 ## LL(1) grammer of tiger programming language
-// todo : types, declares
 program -> exp
 
 exps -> exp SEMICOLON exps
