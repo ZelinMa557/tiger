@@ -1,4 +1,6 @@
 #include <unordered_map>
+#include <unordered_set>
+#include <stack>
 #include <string>
 #include <vector>
 #include "abstract.h"
@@ -45,11 +47,23 @@ struct arrayTy : public tgrTy {
 };
 
 class symtbl {
+    enum class operation { BEGIN, VARDEC, TYDEC, FUNDEC };
+    struct stkop {
+        operation op;
+        S_symbol name;
+    };
 private:
     std::unordered_map<S_symbol, std::vector<tgrTy*>> tenv;
     std::unordered_map<S_symbol, std::vector<S_symbol>> venv;
+    std::unordered_map<S_symbol, std::vector<S_symbol>> fenv;
+    std::stack<std::unordered_set<S_symbol>> t_decs;
+    std::stack<std::unordered_set<S_symbol>> v_decs;
+    std::stack<std::unordered_set<S_symbol>> f_decs;
+    std::vector<stkop> stk;
 public:
-    symtbl() = delete;
+    symtbl();
     void beginScope();
     void endScope();
+    void decType(S_symbol sym, tgrTy* ty);
+    void decVar(S_symbol sym, S_symbol ty);
 };
