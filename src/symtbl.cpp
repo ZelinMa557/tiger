@@ -15,9 +15,6 @@ symtbl::symtbl() {
 
 void symtbl::beginScope() {
     stk.push_back({operation::BEGIN, ""});
-    t_decs.push({});
-    f_decs.push({});
-    v_decs.push({});
 }
 
 void symtbl::endScope() {
@@ -38,7 +35,4 @@ void symtbl::endScope() {
         stk.pop_back();
     }
     stk.pop_back();
-    t_decs.pop();
-    f_decs.pop();
-    v_decs.pop();
 }

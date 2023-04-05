@@ -56,9 +56,6 @@ private:
     std::unordered_map<S_symbol, std::vector<tgrTy*>> tenv;
     std::unordered_map<S_symbol, std::vector<S_symbol>> venv;
     std::unordered_map<S_symbol, std::vector<S_symbol>> fenv;
-    std::stack<std::unordered_set<S_symbol>> t_decs;
-    std::stack<std::unordered_set<S_symbol>> v_decs;
-    std::stack<std::unordered_set<S_symbol>> f_decs;
     std::vector<stkop> stk;
 public:
     symtbl();
