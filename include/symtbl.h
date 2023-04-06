@@ -1,8 +1,8 @@
 #include <unordered_map>
-#include <unordered_set>
 #include <stack>
 #include <string>
 #include <vector>
+#include <list>
 #include "abstract.h"
 enum class TIGTY { RECORD, NILTY, INT, STRING, NAME, ARRAYTY, VOID };
 struct tgrTy {
@@ -53,9 +53,10 @@ class symtbl {
         S_symbol name;
     };
 private:
+    // here we use vector as stack
     std::unordered_map<S_symbol, std::vector<tgrTy*>> tenv;
     std::unordered_map<S_symbol, std::vector<S_symbol>> venv;
-    std::unordered_map<S_symbol, std::vector<S_symbol>> fenv;
+    std::unordered_map<S_symbol, std::vector<std::pair<S_symbol, std::list<field>>>> fenv;
     std::vector<stkop> stk;
 public:
     symtbl();
@@ -63,4 +64,5 @@ public:
     void endScope();
     void decType(S_symbol sym, tgrTy* ty);
     void decVar(S_symbol sym, S_symbol ty);
+    void decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy);
 };

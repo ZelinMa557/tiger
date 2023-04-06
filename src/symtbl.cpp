@@ -10,7 +10,15 @@ symtbl::symtbl() {
     tenv["nil"].push_back(nil_ty);
     tenv["void_ty"].push_back(void_ty);
 
-    // todo : add base functions
+    fenv["print"].push_back({"void", {{"s", "string"}}});
+    fenv["flush"].push_back({"void", {}});
+    fenv["getchar"].push_back({"string", {}});
+    fenv["ord"].push_back({"int", {{"s", "string"}}});
+    fenv["chr"].push_back({"string", {{"i", "int"}}});
+    fenv["substring"].push_back({"string", {{"s", "string"}, {"first", "int"}, {"n", "int"}}});
+    fenv["concat"].push_back({"string", {{"s1", "string"}, {"s2", "string"}}});
+    fenv["not"].push_back({"int", {{"i", "int"}}});
+    fenv["exit"].push_back({"void", {{"i", "int"}}});
 }
 
 void symtbl::beginScope() {
@@ -35,4 +43,19 @@ void symtbl::endScope() {
         stk.pop_back();
     }
     stk.pop_back();
+}
+
+void symtbl::decType(S_symbol sym, tgrTy* ty) {
+    tenv[sym].push_back(ty);
+    stk.push_back({operation::TYDEC, sym});
+}
+
+void symtbl::decVar(S_symbol sym, S_symbol ty) {
+    venv[sym].push_back(ty);
+    stk.push_back({operation::VARDEC, sym});
+}
+
+void symtbl::decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy) {
+    fenv[sym].push_back({retTy, std::move(args)});
+    stk.push_back({operation::FUNDEC, sym});
 }
