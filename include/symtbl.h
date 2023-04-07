@@ -10,6 +10,7 @@ enum class TIGTY { RECORD, NILTY, INT, STRING, NAME, ARRAYTY, VOID };
 struct tgrTy {
     TIGTY ty;
     tgrTy(TIGTY t) : ty(t) {};
+    virtual ~tgrTy() {};
 };
 
 struct nilTy : public tgrTy {
@@ -39,13 +40,13 @@ struct recordTy : public tgrTy {
 };
 
 struct nameTy : public tgrTy {
-    S_symbol ty;
-    nameTy(S_symbol t) : tgrTy(TIGTY::RECORD), ty(t) {};
+    S_symbol pri_type;
+    nameTy(S_symbol t) : tgrTy(TIGTY::RECORD), pri_type(t) {};
 };
 
 struct arrayTy : public tgrTy {
-    S_symbol ty;
-    arrayTy(S_symbol t) : tgrTy(TIGTY::RECORD), ty(t) {};
+    S_symbol element_type;
+    arrayTy(S_symbol t) : tgrTy(TIGTY::RECORD), element_type(t) {};
 };
 
 class symtbl {

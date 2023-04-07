@@ -93,17 +93,20 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
         case expty::ArrayExp:
             {
                 auto e = dynamic_cast<A_ArrayExp*>(exp);
-                auto element_ty = tbl.lookTy(e->type);
-                if(element_ty == nullptr)
+                auto arr_ty = tbl.lookTy(e->type);
+                if(arr_ty == nullptr)
                     error(e->pos, "there is no type named " + e->type);
+                if(arr_ty->ty != TIGTY::ARRAYTY)
+                    error(e->pos, e->type + "is not array type");
+                auto arr_ty_ = dynamic_cast<arrayTy*>(arr_ty);
                 auto sz_ty = check_exp(e->size);
                 if(sz_ty == nullptr || sz_ty->ty != TIGTY::INT)
                     error(e->pos, "Expr in [] are expected to be of type int");
                 auto init_ty = check_exp(e->init);
-                if(element_ty != init_ty)
+                if(tbl.lookTy(arr_ty_->element_type) != init_ty)
                     error(e->pos, "Initialization expr type mismatch");
+                return arr_ty;
             }
-            // todo : what is return value?
             break;
         case expty::BreakExp: return tbl.lookTy("void"); break;
     }
