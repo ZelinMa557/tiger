@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <iostream>
 #include "abstract.h"
 enum class TIGTY { RECORD, NILTY, INT, STRING, NAME, ARRAYTY, VOID };
 struct tgrTy {
@@ -66,4 +67,5 @@ public:
     void decType(S_symbol sym, tgrTy* ty);
     void decVar(S_symbol sym, S_symbol ty);
     void decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy);
+    tgrTy* lookTy(S_symbol ty);
 };

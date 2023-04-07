@@ -32,11 +32,26 @@ void symtbl::endScope() {
         switch (stk.back().op)
         {
         case operation::VARDEC:
-            if(venv[name].size()) venv[name].pop_back(); break;
+            if(venv[name].size()) {
+                venv[name].pop_back();
+                if(venv[name].size() == 0)
+                    venv.erase(name);
+            }
+            break;
         case operation::TYDEC:
-            if(venv[name].size()) tenv[name].pop_back(); break;
+            if(venv[name].size()) {
+                tenv[name].pop_back();
+                if(tenv[name].size() == 0)
+                    tenv.erase(name);
+            }
+            break;
         case operation::FUNDEC:
-            if(fenv[name].size()) fenv[name].pop_back(); break;
+            if(fenv[name].size()) {
+                fenv[name].pop_back();
+                if(fenv[name].size() == 0)
+                    fenv.erase(name);
+            }
+            break;
         default:
             break;
         }
@@ -58,4 +73,10 @@ void symtbl::decVar(S_symbol sym, S_symbol ty) {
 void symtbl::decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy) {
     fenv[sym].push_back({retTy, std::move(args)});
     stk.push_back({operation::FUNDEC, sym});
+}
+
+tgrTy* symtbl::lookTy(S_symbol ty) {
+    if(tenv.count(ty))
+        return tenv[ty].back();
+    return nullptr;
 }
