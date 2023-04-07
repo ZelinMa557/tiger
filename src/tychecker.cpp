@@ -14,7 +14,12 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
     if(!exp) return nullptr;
     using expty = A_exp::type;
     switch(exp->ty) {
-        case expty::VarExp: break;
+        case expty::VarExp:
+            {
+                auto e = dynamic_cast<A_VarExp*>(exp);
+                return check_var(e->var);
+            }
+            break;
         case expty::NilExp: return tbl.lookTy("nil"); break;
         case expty::IntExp: return tbl.lookTy("int"); break;
         case expty::StringExp: return tbl.lookTy("string"); break;
@@ -75,7 +80,18 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             }
             return tbl.lookTy("void");
             break;
-        case expty::LetExp: break;
+        case expty::LetExp:
+            {
+                auto e = dynamic_cast<A_LetExp*>(exp);
+                auto list = e->decs;
+                tbl.beginScope();
+                while(list) {
+                    check_dec(list->head);
+                    list = list->tail;
+                }
+                tbl.endScope();
+            }
+            break;
         case expty::ForExp:
             {
                 auto e = dynamic_cast<A_ForExp*>(exp);
