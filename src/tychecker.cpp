@@ -50,7 +50,8 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 auto e = dynamic_cast<A_OpExp*>(exp);
                 auto l_ty = check_exp(e->left);
                 auto r_ty = check_exp(e->right);
-                assert(l_ty != nullptr && r_ty != nullptr);
+                if(l_ty == nullptr || r_ty == nullptr)
+                    error(e->pos, "Fail to judge type in left or right or both");
                 if(l_ty->ty != TIGTY::INT || r_ty->ty != TIGTY::INT)
                     error(e->pos, "The expression on both sides of the binocular operator must be of type int");
             }
@@ -165,6 +166,46 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             }
             break;
         case expty::BreakExp: return tbl.lookTy("void"); break;
+    }
+    assert(0);
+    return nullptr;
+}
+
+tgrTy* tychecker::check_var(A_var *var) {
+    assert(var != nullptr);
+    using t = A_var::type;
+    switch (var->ty)
+    {
+    case t::SIMPLE:
+        {
+            auto v = dynamic_cast<A_SimpleVar*>(var);
+            return tbl.lookVar(v->sym);
+        }
+        break;
+    case t::FIELD:
+        {
+            auto v = dynamic_cast<A_FieldVar*>(var);
+            auto parTy = check_var(v->var);
+            if(!parTy || parTy->ty != TIGTY::RECORD)
+                error(v->pos, "parent type not exist or is not record type in field var");
+            auto par = dynamic_cast<recordTy*>(parTy);
+            if(!par->fields.count(v->sym))
+                error(v->pos, "parent type has no field named" + v->sym);
+            return tbl.lookTy(par->fields[v->sym]);
+        }
+        break;
+    case t::SUBSCRIPT:
+        {
+            auto v = dynamic_cast<A_SubscriptVar*>(var);
+            auto parTy = check_var(v->var);
+            if(!parTy || parTy->ty != TIGTY::ARRAYTY)
+                error(v->pos, "parent type not exist or is not array type in subscript var");
+            auto expTy = check_exp(v->exp);
+            if(!expTy || expTy->ty != TIGTY::INT)
+                error(v->pos, "Expr in [] are expected to be of type int");
+            return tbl.lookTy(dynamic_cast<arrayTy*>(parTy)->element_type);
+        }
+        break;
     }
     assert(0);
     return nullptr;
