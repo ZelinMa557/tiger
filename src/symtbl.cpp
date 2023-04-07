@@ -80,3 +80,15 @@ tgrTy* symtbl::lookTy(S_symbol ty) {
         return tenv[ty].back();
     return nullptr;
 }
+
+tgrTy* symtbl::lookVar(S_symbol name) {
+    if(venv.count(name))
+        return lookTy(venv[name].back());
+    return nullptr;
+}
+
+std::pair<S_symbol, std::list<field>> symtbl::lookFunc(S_symbol name) {
+    if(fenv.count(name))
+        return fenv[name].back();
+    return {};
+}
