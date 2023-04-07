@@ -23,7 +23,28 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
         case expty::NilExp: return tbl.lookTy("nil"); break;
         case expty::IntExp: return tbl.lookTy("int"); break;
         case expty::StringExp: return tbl.lookTy("string"); break;
-        case expty::CallExp: break;
+        case expty::CallExp:
+            {
+                auto e = dynamic_cast<A_CallExp*>(exp);
+                auto funcTy = tbl.lookFunc(e->func);
+                if(funcTy.first.size() == 0)
+                    error(e->pos, "there is no func named" + e->func);
+                auto res = tbl.lookTy(funcTy.first);
+                if(res == nullptr)
+                    error(e->pos, "there is no type named" + funcTy.first);
+                auto list = e->args;
+                for(auto f : funcTy.second) {
+                    // args less than declared
+                    if(!list) error(e->pos, "args num mismatch");
+                    if(tbl.lookTy(f.ty) != check_exp(list->head))
+                        error(e->pos, "args type mismatch");
+                    list = list->tail;
+                }
+                // args more than declared
+                if(list != nullptr) error(e->pos, "args num mismatch");
+                return res;
+            }
+            break;
         case expty::OpExp:
             {
                 auto e = dynamic_cast<A_OpExp*>(exp);
@@ -35,7 +56,26 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             }
             return tbl.lookTy("int");
             break;
-        case expty::RecordExp: break;
+        case expty::RecordExp:
+            {
+                auto e = dynamic_cast<A_RecordExp*>(exp);
+                auto rty = tbl.lookTy(e->type);
+                if(!rty || rty->ty != TIGTY::RECORD)
+                    error(e->pos, e->type + "is not record type");
+                auto &typefields = dynamic_cast<recordTy*>(rty)->fields;
+                auto list = e->fields;
+                while(list != nullptr) {
+                    if(list->head != nullptr) {
+                        if(!typefields.count(list->head->name))
+                            error(e->pos, e->type + " has no fields named " + list->head->name);
+                        if(check_exp(list->head->exp) != tbl.lookTy(list->head->name))
+                            error(e->pos, "field and exp type mismatch");
+                    }
+                    list = list->tail;
+                }
+                return rty;
+            }
+            break;
         case expty::SeqExp:
             {
                 auto list = dynamic_cast<A_SeqExp*>(exp)->seq;
