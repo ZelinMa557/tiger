@@ -31,8 +31,27 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             return tbl.lookTy("int");
             break;
         case expty::RecordExp: break;
-        case expty::SeqExp: break;
-        case expty::AssignExp: break;
+        case expty::SeqExp:
+            {
+                auto list = dynamic_cast<A_SeqExp*>(exp)->seq;
+                tgrTy* res = nullptr;
+                while(list) {
+                    res = check_exp(list->head);
+                    list = list->tail;
+                }
+                return res;
+            }
+            break;
+        case expty::AssignExp:
+            {
+                auto e = dynamic_cast<A_AssignExp*>(exp);
+                auto varTy = check_var(e->var);
+                auto expTy = check_exp(e->exp);
+                if(varTy != expTy)
+                    error(e->pos, "The types at left & right end of the assignment expression do not match");
+            }
+            return tbl.lookTy("void");
+            break;
         case expty::IfExp:
             {
                 auto e = dynamic_cast<A_IfExp*>(exp);
@@ -71,7 +90,23 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             }
             return tbl.lookTy("void");
             break;
-        case expty::ArrayExp: break;
+        case expty::ArrayExp:
+            {
+                auto e = dynamic_cast<A_ArrayExp*>(exp);
+                auto element_ty = tbl.lookTy(e->type);
+                if(element_ty == nullptr)
+                    error(e->pos, "there is no type named " + e->type);
+                auto sz_ty = check_exp(e->size);
+                if(sz_ty == nullptr || sz_ty->ty != TIGTY::INT)
+                    error(e->pos, "Expr in [] are expected to be of type int");
+                auto init_ty = check_exp(e->init);
+                if(element_ty != init_ty)
+                    error(e->pos, "Initialization expr type mismatch");
+            }
+            // todo : what is return value?
+            break;
         case expty::BreakExp: return tbl.lookTy("void"); break;
     }
+    assert(0);
+    return nullptr;
 }
