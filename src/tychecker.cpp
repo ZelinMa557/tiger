@@ -137,7 +137,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             {
                 auto e = dynamic_cast<A_ForExp*>(exp);
                 tbl.beginScope();
-                tbl.decVar(e->var, "int");
+                tbl.decVar(e->var, tbl.lookTy("int"));
                 auto lo_ty = check_exp(e->lo);
                 auto hi_ty = check_exp(e->hi);
                 if(lo_ty == nullptr || lo_ty->ty != TIGTY::INT || hi_ty == nullptr || hi_ty->ty != TIGTY::INT)
@@ -209,4 +209,40 @@ tgrTy* tychecker::check_var(A_var *var) {
     }
     assert(0);
     return nullptr;
+}
+
+void tychecker::check_dec(A_dec *dec) {
+    using dt = A_dec::type;
+    switch (dec->ty)
+    {
+    case dt::VARD:
+        {
+            auto d = dynamic_cast<A_VarDec*>(dec);
+            // need type deduction
+            if(d->type.size() == 0) {
+                tbl.decVar(d->var, check_exp(d->init));
+            }
+            else {
+                auto expected_ty = tbl.lookTy(d->type);
+                auto init_ty = check_exp(d->init);
+                if(!expected_ty || !init_ty || expected_ty != init_ty) {
+                    error(d->pos, "types are not exist or mismatch in var declaration");
+                }
+                tbl.decVar(d->var, expected_ty);
+            }
+        }
+        break;
+    case dt::TYDS:
+        {
+            auto d = dynamic_cast<A_TypeDec*>(dec);
+        }
+        break;
+    case dt::FUNCDS:
+        {
+            auto d = dynamic_cast<A_FunctionDec*>(dec);
+        }
+        break;
+    default:
+        break;
+    }
 }
