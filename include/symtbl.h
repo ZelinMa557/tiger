@@ -58,7 +58,7 @@ class symtbl {
 private:
     // here we use vector as stack
     std::unordered_map<S_symbol, std::vector<tgrTy*>> tenv;
-    std::unordered_map<S_symbol, std::vector<S_symbol>> venv;
+    std::unordered_map<S_symbol, std::vector<tgrTy*>> venv;
     std::unordered_map<S_symbol, std::vector<std::pair<S_symbol, std::list<field>>>> fenv;
     std::vector<stkop> stk;
 public:
@@ -66,7 +66,7 @@ public:
     void beginScope();
     void endScope();
     void decType(S_symbol sym, tgrTy* ty);
-    void decVar(S_symbol sym, S_symbol ty);
+    void decVar(S_symbol sym, tgrTy* ty);
     void decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy);
     tgrTy* lookTy(S_symbol ty);
     tgrTy* lookVar(S_symbol name);

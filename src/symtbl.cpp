@@ -65,7 +65,7 @@ void symtbl::decType(S_symbol sym, tgrTy* ty) {
     stk.push_back({operation::TYDEC, sym});
 }
 
-void symtbl::decVar(S_symbol sym, S_symbol ty) {
+void symtbl::decVar(S_symbol sym, tgrTy* ty) {
     venv[sym].push_back(ty);
     stk.push_back({operation::VARDEC, sym});
 }
@@ -83,7 +83,7 @@ tgrTy* symtbl::lookTy(S_symbol ty) {
 
 tgrTy* symtbl::lookVar(S_symbol name) {
     if(venv.count(name))
-        return lookTy(venv[name].back());
+        return venv[name].back();
     return nullptr;
 }
 
