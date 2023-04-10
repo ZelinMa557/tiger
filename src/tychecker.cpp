@@ -236,13 +236,42 @@ void tychecker::check_dec(A_dec *dec) {
             auto list = d->type;
             for(; list != nullptr; list = list->tail) {
                 
-                
             }
         }
         break;
     case dt::FUNCDS:
         {
             auto d = dynamic_cast<A_FunctionDec*>(dec);
+            // first, add func declaration to environment
+            auto list = d->function;
+            for(; list != nullptr; list = list->tail) {
+                auto cur = list->head;
+                tgrTy *resTy = nullptr;
+                if(cur->result.size() != 0) {
+                    resTy = tbl.lookTy(cur->result);
+                    if(resTy == nullptr)
+                        error(cur->pos, "there is no type named " + cur->result);
+                }
+                std::list<tgrTy*> argTys;
+                for(auto argnode = cur->params; argnode != nullptr; argnode = argnode->tail) {
+                    auto argTy = tbl.lookTy(argnode->head->type);
+                    if(argTy == nullptr)
+                        error(cur->pos, "there is no type named " + argnode->head->type);
+                    argTys.push_back(argTy);
+                }
+                tbl.decFunc(cur->name, argTys, resTy);
+            }
+            // then, check the function bodys.
+            auto list = d->function;
+            for(; list != nullptr; list = list->tail) {
+                auto cur = list->head;
+                tbl.beginScope();
+                for(auto argnode = cur->params; argnode != nullptr; argnode = argnode->tail) {
+                    tbl.decVar(argnode->head->name, tbl.lookTy(argnode->head->type));
+                }
+                check_exp(cur->body);
+                tbl.endScope();
+            }
         }
         break;
     default:
