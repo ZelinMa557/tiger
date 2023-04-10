@@ -8,3 +8,4 @@ include_directories(include)
 
 add_executable(lexer_test src/lexer.cpp test/lexer_test.cpp)
 add_executable(parser_test src/parser.cpp src/printabs.cpp src/lexer.cpp test/parser_test.cpp)
+add_executable(checker_test src/parser.cpp src/lexer.cpp src/symtbl.cpp src/tychecker.cpp test/checker_test.cpp)
