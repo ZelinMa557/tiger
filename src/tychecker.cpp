@@ -27,16 +27,14 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             {
                 auto e = dynamic_cast<A_CallExp*>(exp);
                 auto funcTy = tbl.lookFunc(e->func);
-                if(funcTy.first.size() == 0)
+                if(funcTy.first == nullptr)
                     error(e->pos, "there is no func named" + e->func);
-                auto res = tbl.lookTy(funcTy.first);
-                if(res == nullptr)
-                    error(e->pos, "there is no type named" + funcTy.first);
+                auto res = funcTy.first;
                 auto list = e->args;
-                for(auto f : funcTy.second) {
+                for(auto argTy : funcTy.second) {
                     // args less than declared
                     if(!list) error(e->pos, "args num mismatch");
-                    if(tbl.lookTy(f.ty) != check_exp(list->head))
+                    if(argTy != check_exp(list->head))
                         error(e->pos, "args type mismatch");
                     list = list->tail;
                 }
@@ -191,7 +189,7 @@ tgrTy* tychecker::check_var(A_var *var) {
             auto par = dynamic_cast<recordTy*>(parTy);
             if(!par->fields.count(v->sym))
                 error(v->pos, "parent type has no field named" + v->sym);
-            return tbl.lookTy(par->fields[v->sym]);
+            return par->fields[v->sym];
         }
         break;
     case t::SUBSCRIPT:
@@ -235,6 +233,11 @@ void tychecker::check_dec(A_dec *dec) {
     case dt::TYDS:
         {
             auto d = dynamic_cast<A_TypeDec*>(dec);
+            auto list = d->type;
+            for(; list != nullptr; list = list->tail) {
+                
+                
+            }
         }
         break;
     case dt::FUNCDS:

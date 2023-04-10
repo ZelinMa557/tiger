@@ -10,15 +10,15 @@ symtbl::symtbl() {
     tenv["nil"].push_back(nil_ty);
     tenv["void_ty"].push_back(void_ty);
 
-    fenv["print"].push_back({"void", {{"s", "string"}}});
-    fenv["flush"].push_back({"void", {}});
-    fenv["getchar"].push_back({"string", {}});
-    fenv["ord"].push_back({"int", {{"s", "string"}}});
-    fenv["chr"].push_back({"string", {{"i", "int"}}});
-    fenv["substring"].push_back({"string", {{"s", "string"}, {"first", "int"}, {"n", "int"}}});
-    fenv["concat"].push_back({"string", {{"s1", "string"}, {"s2", "string"}}});
-    fenv["not"].push_back({"int", {{"i", "int"}}});
-    fenv["exit"].push_back({"void", {{"i", "int"}}});
+    fenv["print"].push_back({void_ty, string_ty});
+    fenv["flush"].push_back({void_ty});
+    fenv["getchar"].push_back({string_ty});
+    fenv["ord"].push_back({int_ty, string_ty});
+    fenv["chr"].push_back({string_ty, int_ty});
+    fenv["substring"].push_back({string_ty, string_ty, int_ty, int_ty});
+    fenv["concat"].push_back({string_ty, string_ty, string_ty});
+    fenv["not"].push_back({int_ty, int_ty});
+    fenv["exit"].push_back({void_ty, int_ty});
 }
 
 void symtbl::beginScope() {
@@ -70,8 +70,10 @@ void symtbl::decVar(S_symbol sym, tgrTy* ty) {
     stk.push_back({operation::VARDEC, sym});
 }
 
-void symtbl::decFunc(S_symbol sym, std::list<field> &args, S_symbol retTy) {
-    fenv[sym].push_back({retTy, std::move(args)});
+void symtbl::decFunc(S_symbol sym, std::list<tgrTy*> &args, tgrTy* retTy) {
+    auto args_ = args;
+    args_.emplace_front(retTy);
+    fenv[sym].push_back(std::move(args_));
     stk.push_back({operation::FUNDEC, sym});
 }
 
@@ -87,8 +89,12 @@ tgrTy* symtbl::lookVar(S_symbol name) {
     return nullptr;
 }
 
-std::pair<S_symbol, std::list<field>> symtbl::lookFunc(S_symbol name) {
-    if(fenv.count(name))
-        return fenv[name].back();
-    return {};
+std::pair<tgrTy*, std::list<tgrTy*>> symtbl::lookFunc(S_symbol name) {
+    if(fenv.count(name)) {
+        auto list = fenv[name].back();
+        tgrTy *retType = list.front();
+        list.pop_front();
+        return {retType, list};
+    }
+    return {nullptr, {}};
 }
