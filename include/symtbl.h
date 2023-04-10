@@ -36,12 +36,12 @@ struct recordTy : public tgrTy {
 
 struct nameTy : public tgrTy {
     S_symbol pri_type;
-    nameTy(S_symbol t) : tgrTy(TIGTY::RECORD), pri_type(t) {};
+    nameTy(S_symbol t) : tgrTy(TIGTY::NAME), pri_type(t) {};
 };
 
 struct arrayTy : public tgrTy {
     S_symbol element_type;
-    arrayTy(S_symbol t) : tgrTy(TIGTY::RECORD), element_type(t) {};
+    arrayTy(S_symbol t) : tgrTy(TIGTY::ARRAYTY), element_type(t) {};
 };
 
 class symtbl {
