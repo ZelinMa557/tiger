@@ -267,6 +267,7 @@ void tychecker::check_dec(A_dec *dec) {
                 }   
             }
             // add internal defination for array type & record type
+            list = d->type;
             for(; list != nullptr; list = list->tail) {
                 auto cur = list->head;
                 switch(cur->ty->ty) {
@@ -318,7 +319,7 @@ void tychecker::check_dec(A_dec *dec) {
                 tbl.decFunc(cur->name, argTys, resTy);
             }
             // then, check the function bodys.
-            auto list = d->function;
+            list = d->function;
             for(; list != nullptr; list = list->tail) {
                 auto cur = list->head;
                 tbl.beginScope();

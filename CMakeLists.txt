@@ -5,7 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(include)
-
-add_executable(lexer_test src/lexer.cpp test/lexer_test.cpp)
-add_executable(parser_test src/parser.cpp src/printabs.cpp src/lexer.cpp test/parser_test.cpp)
-add_executable(checker_test src/parser.cpp src/lexer.cpp src/symtbl.cpp src/tychecker.cpp test/checker_test.cpp)
+set(LEXER_SRC src/lexer.cpp)
+set(PARSER_SRC src/parser.cpp)
+set(CHECKER_SRC src/symtbl.cpp src/tychecker.cpp)
+add_executable(lexer_test ${LEXER_SRC} test/lexer_test.cpp)
+add_executable(parser_test ${LEXER_SRC} ${PARSER_SRC} src/printabs.cpp test/parser_test.cpp)
+add_executable(checker_test ${LEXER_SRC} ${PARSER_SRC} ${CHECKER_SRC} test/tychecker_test.cpp)
