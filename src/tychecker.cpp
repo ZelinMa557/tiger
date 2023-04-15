@@ -107,6 +107,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 if(else_ty == nullptr) return then_ty;
                 if(then_ty != else_ty)
                     error(e->pos, "The two branches in the if statement are of inconsistent types");
+                return then_ty;
             }
             break;
         case expty::WhileExp:
@@ -130,6 +131,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 }
                 tbl.endScope();
             }
+            return tbl.lookTy("void");
             break;
         case expty::ForExp:
             {
