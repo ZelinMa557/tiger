@@ -28,7 +28,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 auto e = dynamic_cast<A_CallExp*>(exp);
                 auto funcTy = tbl.lookFunc(e->func);
                 if(funcTy.first == nullptr)
-                    error(e->pos, "there is no func named" + e->func);
+                    error(e->pos, "there is no func named " + e->func);
                 auto res = funcTy.first;
                 auto list = e->args;
                 for(auto argTy : funcTy.second) {
@@ -305,8 +305,9 @@ void tychecker::check_dec(A_dec *dec) {
             auto list = d->function;
             for(; list != nullptr; list = list->tail) {
                 auto cur = list->head;
-                tgrTy *resTy = nullptr;
-                if(cur->result.size() != 0) {
+                tgrTy *resTy = tbl.lookTy("void");
+                assert(resTy != nullptr);
+                if(cur->result.length() != 0) {
                     resTy = tbl.lookTy(cur->result);
                     if(resTy == nullptr)
                         error(cur->pos, "there is no type named " + cur->result);

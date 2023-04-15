@@ -8,7 +8,7 @@ symtbl::symtbl() {
     tenv["int"].push_back(int_ty);
     tenv["string"].push_back(string_ty);
     tenv["nil"].push_back(nil_ty);
-    tenv["void_ty"].push_back(void_ty);
+    tenv["void"].push_back(void_ty);
 
     fenv["print"].push_back({void_ty, string_ty});
     fenv["flush"].push_back({void_ty});
@@ -72,7 +72,7 @@ void symtbl::decVar(S_symbol sym, tgrTy* ty) {
 
 void symtbl::decFunc(S_symbol sym, std::list<tgrTy*> &args, tgrTy* retTy) {
     auto args_ = args;
-    args_.emplace_front(retTy);
+    args_.push_front(retTy);
     fenv[sym].push_back(std::move(args_));
     stk.push_back({operation::FUNDEC, sym});
 }
