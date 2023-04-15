@@ -67,7 +67,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     if(list->head != nullptr) {
                         if(!typefields.count(list->head->name))
                             error(e->pos, e->type + " has no fields named " + list->head->name);
-                        if(check_exp(list->head->exp) != tbl.lookTy(list->head->name))
+                        if(check_exp(list->head->exp) != typefields[list->head->name])
                             error(e->pos, "field and exp type mismatch");
                     }
                     list = list->tail;
