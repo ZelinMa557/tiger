@@ -280,7 +280,15 @@ void tychecker::check_dec(A_dec *dec) {
                         }
                         break;
                     case A_ty::type::RecordTy: {
-                            
+                            auto fieldList = dynamic_cast<A_RecordTy*>(cur->ty)->record;
+                            auto ty = dynamic_cast<recordTy*>(tbl.lookTy(cur->name));
+                            assert(ty != nullptr);
+                            for(; fieldList != nullptr; fieldList = fieldList->tail) {
+                                auto fieldTy = tbl.lookTy(fieldList->head->type);
+                                if(fieldTy == nullptr)
+                                    error(cur->ty->pos, "there is no type named " + fieldList->head->type);
+                                ty->fields[fieldList->head->name] = fieldTy;
+                            }
                         }
                         break;
                 }
