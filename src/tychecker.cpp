@@ -179,7 +179,10 @@ tgrTy* tychecker::check_var(A_var *var) {
     case t::SIMPLE:
         {
             auto v = dynamic_cast<A_SimpleVar*>(var);
-            return tbl.lookVar(v->sym);
+            auto res = tbl.lookVar(v->sym);
+            if(res == nullptr)
+                error(v->pos, "undeclared var " + v->sym);
+            return res;
         }
         break;
     case t::FIELD:
@@ -190,7 +193,7 @@ tgrTy* tychecker::check_var(A_var *var) {
                 error(v->pos, "parent type not exist or is not record type in field var");
             auto par = dynamic_cast<recordTy*>(parTy);
             if(!par->fields.count(v->sym))
-                error(v->pos, "parent type has no field named" + v->sym);
+                error(v->pos, "parent type has no field named " + v->sym);
             return par->fields[v->sym];
         }
         break;
