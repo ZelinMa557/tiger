@@ -65,6 +65,7 @@ public:
     void decVar(S_symbol sym, tgrTy* ty);
     void decFunc(S_symbol sym, std::list<tgrTy*> &args, tgrTy* retTy);
     tgrTy* lookTy(S_symbol ty);
+    bool ExistTy(S_symbol ty);
     tgrTy* lookVar(S_symbol name);
     std::pair<tgrTy*, std::list<tgrTy*>> lookFunc(S_symbol name);
 };

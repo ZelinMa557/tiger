@@ -98,3 +98,7 @@ std::pair<tgrTy*, std::list<tgrTy*>> symtbl::lookFunc(S_symbol name) {
     }
     return {nullptr, {}};
 }
+
+bool symtbl::ExistTy(S_symbol ty) {
+    return tenv.count(ty);
+}

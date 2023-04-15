@@ -234,8 +234,56 @@ void tychecker::check_dec(A_dec *dec) {
         {
             auto d = dynamic_cast<A_TypeDec*>(dec);
             auto list = d->type;
+            std::unordered_map<S_symbol, A_NameTy*> nameTys;  // store named types
             for(; list != nullptr; list = list->tail) {
-                
+                auto cur = list->head;
+                switch(cur->ty->ty) {
+                    case A_ty::type::ArrayTy:
+                        tbl.decType(cur->name, new arrayTy(""));
+                        break;
+                    case A_ty::type::NameTy:
+                        nameTys[cur->name] = dynamic_cast<A_NameTy*>(cur->ty);
+                        break;
+                    case A_ty::type::RecordTy: {
+                            std::unordered_map<S_symbol, tgrTy*> fields;
+                            tbl.decType(cur->name, new recordTy(fields));
+                        }
+                        break;
+                }
+            }
+            // add defination for named type
+            for(auto [name, ty] : nameTys) {
+                S_symbol parent_name = ty->type;
+                while (true) {
+                    if(parent_name == name)
+                        error(ty->pos, "loop recursive type defination on " + name);
+                    if(tbl.ExistTy(parent_name)) {
+                        tbl.decType(name, tbl.lookTy(parent_name));
+                        break;
+                    }
+                    if(nameTys.count(parent_name))
+                        parent_name = nameTys[parent_name]->type;
+                    else error(ty->pos, "there is no type named " + parent_name);
+                }   
+            }
+            // add internal defination for array type & record type
+            for(; list != nullptr; list = list->tail) {
+                auto cur = list->head;
+                switch(cur->ty->ty) {
+                    case A_ty::type::ArrayTy: {
+                            auto arrTy = dynamic_cast<A_ArrayTy*>(cur->ty);
+                            if(!tbl.lookTy(arrTy->array))
+                                error(cur->ty->pos, "there is no type named " + arrTy->array);
+                            auto ty = dynamic_cast<arrayTy*>(tbl.lookTy(cur->name));
+                            assert(ty != nullptr);
+                            ty->element_type = arrTy->array;
+                        }
+                        break;
+                    case A_ty::type::RecordTy: {
+                            
+                        }
+                        break;
+                }
             }
         }
         break;
