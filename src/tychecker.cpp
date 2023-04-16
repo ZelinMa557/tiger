@@ -1,4 +1,5 @@
 #include "tychecker.h"
+#include <unordered_set>
 #include <assert.h>
 void tychecker::error(int line, std::string errmsg) {
     std::cerr << "in line " << line << ":" << std::endl;
@@ -259,9 +260,12 @@ void tychecker::check_dec(A_dec *dec) {
             // add defination for named type
             for(auto [name, ty] : nameTys) {
                 S_symbol parent_name = ty->type;
+                std::unordered_set<S_symbol> path;
+                path.insert(name);
                 while (true) {
-                    if(parent_name == name)
-                        error(ty->pos, "loop recursive type defination on " + name);
+                    if(path.count(parent_name))
+                        error(ty->pos, "loop recursive type defination on " + parent_name);
+                    path.insert(parent_name);
                     if(tbl.ExistTy(parent_name)) {
                         tbl.decType(name, tbl.lookTy(parent_name));
                         break;
