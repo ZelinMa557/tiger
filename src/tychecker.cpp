@@ -84,7 +84,8 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                         if(!typefields.count(list->head->name))
                             error(e->pos, e->type + " has no fields named " + list->head->name);
                         auto initTy = check_exp(list->head->exp);
-                        if(initTy->ty != TIGTY::NILTY && initTy != typefields[list->head->name])
+                        if(!(initTy->ty == TIGTY::NILTY && typefields[list->head->name]->ty == TIGTY::RECORD) 
+                                    && initTy != typefields[list->head->name])
                             error(e->pos, "field and exp type mismatch");
                     }
                     list = list->tail;
@@ -108,7 +109,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 auto e = dynamic_cast<A_AssignExp*>(exp);
                 auto varTy = check_var(e->var);
                 auto expTy = check_exp(e->exp);
-                if(varTy != expTy)
+                if(varTy != expTy && !(varTy->ty == TIGTY::RECORD && expTy->ty == TIGTY::NILTY))
                     error(e->pos, "The types at left & right end of the assignment expression do not match");
             }
             return tbl.lookTy("void");
@@ -121,8 +122,9 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     error(e->pos, "The test condition for the if statement must be of type int");
                 auto then_ty = check_exp(e->then);
                 auto else_ty = check_exp(e->elsee);
-                if(else_ty == nullptr) return then_ty;
-                if(then_ty != else_ty)
+                if(else_ty == nullptr) return tbl.lookTy("void");
+                if(then_ty != else_ty && !(then_ty->ty == TIGTY::NILTY && else_ty->ty == TIGTY::RECORD ||
+                                            then_ty->ty == TIGTY::RECORD && else_ty->ty == TIGTY::NILTY))
                     error(e->pos, "The two branches in the if statement are of inconsistent types");
                 return then_ty;
             }
@@ -242,12 +244,17 @@ void tychecker::check_dec(A_dec *dec) {
             auto d = dynamic_cast<A_VarDec*>(dec);
             // need type deduction
             if(d->type.size() == 0) {
-                tbl.decVar(d->var, check_exp(d->init));
+                auto ty = check_exp(d->init);
+                if(ty == nullptr || ty->ty == TIGTY::VOID)
+                    error(d->pos, "invalid type dec.");
+                if(ty->ty == TIGTY::NILTY)
+                    error(d->pos, "initializing nil expressions not constrained by record type");
+                tbl.decVar(d->var, ty);
             }
             else {
                 auto expected_ty = tbl.lookTy(d->type);
                 auto init_ty = check_exp(d->init);
-                if(!expected_ty || !init_ty || expected_ty != init_ty && init_ty->ty != TIGTY::NILTY) {
+                if(!expected_ty || !init_ty || expected_ty != init_ty && !(expected_ty->ty == TIGTY::RECORD && init_ty->ty == TIGTY::NILTY)) {
                     error(d->pos, "types are not exist or mismatch in var declaration");
                 }
                 tbl.decVar(d->var, expected_ty);
