@@ -148,10 +148,12 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     check_dec(list->head);
                     list = list->tail;
                 }
-                check_exp(e->body);
+                auto res = check_exp(e->body);
                 tbl.endScope();
+                if(res != nullptr)
+                    return res;
+                else return tbl.lookTy("void");
             }
-            return tbl.lookTy("void");
             break;
         case expty::ForExp:
             {

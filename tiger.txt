@@ -116,3 +116,7 @@ idexp -> L_SMALL arglist R_SMALL
       ->
 idexp_ -> OF exp
        -> idexp
+
+## changes on grammer
+1. the body of for-exp, while-exp, if-then-exp might has value, and the exp itself has no value.
+2. the procedure may has return value
