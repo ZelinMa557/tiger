@@ -242,9 +242,13 @@ void tychecker::check_dec(A_dec *dec) {
         {
             auto d = dynamic_cast<A_TypeDec*>(dec);
             auto list = d->type;
+            std::unordered_set<S_symbol> ty_names;
             std::unordered_map<S_symbol, A_NameTy*> nameTys;  // store named types
             for(; list != nullptr; list = list->tail) {
                 auto cur = list->head;
+                if(ty_names.count(cur->name))
+                    error(list->head->ty->pos, "multiple defination on type " + cur->name);
+                ty_names.insert(cur->name);
                 switch(cur->ty->ty) {
                     case A_ty::type::ArrayTy:
                         tbl.decType(cur->name, new arrayTy(""));
@@ -312,7 +316,11 @@ void tychecker::check_dec(A_dec *dec) {
             auto d = dynamic_cast<A_FunctionDec*>(dec);
             // first, add func declaration to environment
             auto list = d->function;
+            std::unordered_set<S_symbol> func_names;
             for(; list != nullptr; list = list->tail) {
+                if(func_names.count(list->head->name))
+                    error(list->head->pos, "multiple defination of function " + list->head->name);
+                func_names.insert(list->head->name);
                 auto cur = list->head;
                 tgrTy *resTy = tbl.lookTy("void");
                 assert(resTy != nullptr);
