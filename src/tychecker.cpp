@@ -218,6 +218,7 @@ tgrTy* tychecker::check_var(A_var *var) {
 }
 
 void tychecker::check_dec(A_dec *dec) {
+    assert(dec != nullptr);
     using dt = A_dec::type;
     switch (dec->ty)
     {
@@ -330,7 +331,7 @@ void tychecker::check_dec(A_dec *dec) {
                         error(cur->pos, "there is no type named " + cur->result);
                 }
                 std::list<tgrTy*> argTys;
-                for(auto argnode = cur->params; argnode != nullptr; argnode = argnode->tail) {
+                for(auto argnode = cur->params; argnode != nullptr && argnode->head != nullptr; argnode = argnode->tail) {
                     auto argTy = tbl.lookTy(argnode->head->type);
                     if(argTy == nullptr)
                         error(cur->pos, "there is no type named " + argnode->head->type);
@@ -343,7 +344,7 @@ void tychecker::check_dec(A_dec *dec) {
             for(; list != nullptr; list = list->tail) {
                 auto cur = list->head;
                 tbl.beginScope();
-                for(auto argnode = cur->params; argnode != nullptr; argnode = argnode->tail) {
+                for(auto argnode = cur->params; argnode != nullptr && argnode->head != nullptr; argnode = argnode->tail) {
                     tbl.decVar(argnode->head->name, tbl.lookTy(argnode->head->type));
                 }
                 check_exp(cur->body);

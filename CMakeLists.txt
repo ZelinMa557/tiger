@@ -4,6 +4,9 @@ project(Tiger)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+SET(CMAKE_BUILD_TYPE "Debug") 
+SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb")
+
 include_directories(include)
 set(LEXER_SRC src/lexer.cpp)
 set(PARSER_SRC src/parser.cpp)
