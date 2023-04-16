@@ -51,8 +51,23 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 auto r_ty = check_exp(e->right);
                 if(l_ty == nullptr || r_ty == nullptr)
                     error(e->pos, "Fail to judge type in left or right or both");
-                if(l_ty->ty != TIGTY::INT || r_ty->ty != TIGTY::INT)
-                    error(e->pos, "The expression on both sides of the binocular operator must be of type int");
+                switch (e->oper)
+                {
+                case A_oper::A_eqOp: case A_oper::A_neqOp:
+                    if(l_ty == r_ty || l_ty->ty == TIGTY::NILTY && r_ty->ty == TIGTY::RECORD ||
+                                        r_ty->ty == TIGTY::NILTY && l_ty->ty == TIGTY::RECORD);
+                    else error(e->pos, "invalid types for compare operation");
+                    break;
+                case A_oper::A_geOp: case A_oper::A_gtOp: case A_oper::A_leOp: case A_oper::A_ltOP:
+                    if(l_ty->ty == TIGTY::INT && r_ty->ty == TIGTY::INT ||
+                        l_ty->ty == TIGTY::STRING && r_ty->ty == TIGTY::STRING);
+                    else error(e->pos, "invalid types for compare operation");
+                case A_oper::A_plusOp: case A_oper::A_minusOp: case A_oper::A_timesOp: case A_oper::A_divideOp:
+                    if(l_ty->ty == TIGTY::INT && r_ty->ty == TIGTY::INT);
+                    else error(e->pos, "invalid types for int operation");
+                default:
+                    break;
+                }
             }
             return tbl.lookTy("int");
             break;
