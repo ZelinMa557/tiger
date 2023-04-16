@@ -68,7 +68,8 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     if(list->head != nullptr) {
                         if(!typefields.count(list->head->name))
                             error(e->pos, e->type + " has no fields named " + list->head->name);
-                        if(check_exp(list->head->exp) != typefields[list->head->name])
+                        auto initTy = check_exp(list->head->exp);
+                        if(initTy->ty != TIGTY::NILTY && initTy != typefields[list->head->name])
                             error(e->pos, "field and exp type mismatch");
                     }
                     list = list->tail;
@@ -130,6 +131,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     check_dec(list->head);
                     list = list->tail;
                 }
+                check_exp(e->body);
                 tbl.endScope();
             }
             return tbl.lookTy("void");
@@ -229,7 +231,7 @@ void tychecker::check_dec(A_dec *dec) {
             else {
                 auto expected_ty = tbl.lookTy(d->type);
                 auto init_ty = check_exp(d->init);
-                if(!expected_ty || !init_ty || expected_ty != init_ty) {
+                if(!expected_ty || !init_ty || expected_ty != init_ty && init_ty->ty != TIGTY::NILTY) {
                     error(d->pos, "types are not exist or mismatch in var declaration");
                 }
                 tbl.decVar(d->var, expected_ty);
