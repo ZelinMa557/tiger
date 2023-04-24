@@ -9,39 +9,35 @@
 enum class TIGTY { RECORD, NILTY, INT, STRING, NAME, ARRAYTY, VOID };
 struct tgrTy {
     TIGTY ty;
-    tgrTy(TIGTY t) : ty(t) {};
+    S_symbol name;
+    tgrTy(TIGTY t, S_symbol name_) : ty(t), name(name_) {};
     virtual ~tgrTy() {};
 };
 
 struct nilTy : public tgrTy {
-    nilTy() : tgrTy(TIGTY::NILTY) {};
+    nilTy() : tgrTy(TIGTY::NILTY, "nil") {};
 };
 
 struct intTy : public tgrTy {
-    intTy() : tgrTy(TIGTY::INT) {};
+    intTy() : tgrTy(TIGTY::INT, "int") {};
 };
 
 struct stringTy : public tgrTy {
-    stringTy() : tgrTy(TIGTY::STRING) {};
+    stringTy() : tgrTy(TIGTY::STRING, "string") {};
 };
 
 struct voidTy : public tgrTy {
-    voidTy() : tgrTy(TIGTY::VOID) {};
+    voidTy() : tgrTy(TIGTY::VOID, "void") {};
 };
 
 struct recordTy : public tgrTy {
     std::unordered_map<S_symbol, tgrTy*> fields;
-    recordTy(decltype(fields) fs) : tgrTy(TIGTY::RECORD), fields(std::move(fs)) {};
-};
-
-struct nameTy : public tgrTy {
-    S_symbol pri_type;
-    nameTy(S_symbol t) : tgrTy(TIGTY::NAME), pri_type(t) {};
+    recordTy(decltype(fields) fs, S_symbol name_) : tgrTy(TIGTY::RECORD, name_), fields(std::move(fs)) {};
 };
 
 struct arrayTy : public tgrTy {
     S_symbol element_type;
-    arrayTy(S_symbol t) : tgrTy(TIGTY::ARRAYTY), element_type(t) {};
+    arrayTy(S_symbol t, S_symbol name_) : tgrTy(TIGTY::ARRAYTY, name_), element_type(t) {};
 };
 
 class symtbl {

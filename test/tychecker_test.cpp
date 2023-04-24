@@ -1,5 +1,6 @@
 #include "tychecker.h"
 #include "parser.h"
+#include "printabs.h"
 
 #include <iostream>
 
@@ -14,5 +15,6 @@ int main(int argc, char **argv) {
     auto abs = p.parse();
     tychecker checker(abs);
     checker.check();
+    print_exp(abs, 0);
     return 0;
 }

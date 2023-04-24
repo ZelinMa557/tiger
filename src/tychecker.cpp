@@ -183,7 +183,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                     error(e->pos, "Expr in [] are expected to be of type int");
                 auto init_ty = check_exp(e->init);
                 if(tbl.lookTy(arr_ty_->element_type) != init_ty)
-                    error(e->pos, "Initialization expr type mismatch");
+                    error(e->pos, "Initialization expr type mismatch ");
                 return arr_ty;
             }
             break;
@@ -252,6 +252,8 @@ void tychecker::check_dec(A_dec *dec) {
                 if(ty->ty == TIGTY::NILTY)
                     error(d->pos, "initializing nil expressions not constrained by record type");
                 tbl.decVar(d->var, ty);
+                // complete the syntax tree, which can simplifie the generator.
+                d->type = ty->name;
             }
             else {
                 auto expected_ty = tbl.lookTy(d->type);
@@ -260,6 +262,8 @@ void tychecker::check_dec(A_dec *dec) {
                     error(d->pos, "types are not exist or mismatch in var declaration");
                 }
                 tbl.decVar(d->var, expected_ty);
+                // this will erase all the named types, the generator can just ignore named type declarations.
+                d->type = expected_ty->name;
             }
         }
         break;
@@ -276,14 +280,14 @@ void tychecker::check_dec(A_dec *dec) {
                 ty_names.insert(cur->name);
                 switch(cur->ty->ty) {
                     case A_ty::type::ArrayTy:
-                        tbl.decType(cur->name, new arrayTy(""));
+                        tbl.decType(cur->name, new arrayTy("", cur->name));
                         break;
                     case A_ty::type::NameTy:
                         nameTys[cur->name] = dynamic_cast<A_NameTy*>(cur->ty);
                         break;
                     case A_ty::type::RecordTy: {
                             std::unordered_map<S_symbol, tgrTy*> fields;
-                            tbl.decType(cur->name, new recordTy(fields));
+                            tbl.decType(cur->name, new recordTy(fields, cur->name));
                         }
                         break;
                 }
@@ -313,11 +317,14 @@ void tychecker::check_dec(A_dec *dec) {
                 switch(cur->ty->ty) {
                     case A_ty::type::ArrayTy: {
                             auto arrTy = dynamic_cast<A_ArrayTy*>(cur->ty);
+                            auto eleTy = tbl.lookTy(dynamic_cast<A_ArrayTy*>(cur->ty)->array);
                             if(!tbl.lookTy(arrTy->array))
                                 error(cur->ty->pos, "there is no type named " + arrTy->array);
                             auto ty = dynamic_cast<arrayTy*>(tbl.lookTy(cur->name));
                             assert(ty != nullptr);
-                            ty->element_type = arrTy->array;
+                            // erase named types
+                            arrTy->array = eleTy->name;
+                            ty->element_type = eleTy->name;
                         }
                         break;
                     case A_ty::type::RecordTy: {
@@ -329,6 +336,8 @@ void tychecker::check_dec(A_dec *dec) {
                                 if(fieldTy == nullptr)
                                     error(cur->ty->pos, "there is no type named " + fieldList->head->type);
                                 ty->fields[fieldList->head->name] = fieldTy;
+                                // erase named type
+                                fieldList->head->type = fieldTy->name;
                             }
                         }
                         break;
@@ -353,12 +362,16 @@ void tychecker::check_dec(A_dec *dec) {
                     resTy = tbl.lookTy(cur->result);
                     if(resTy == nullptr)
                         error(cur->pos, "there is no type named " + cur->result);
+                    cur->result = resTy->name;
                 }
+                else cur->result = "void";
                 std::list<tgrTy*> argTys;
                 for(auto argnode = cur->params; argnode != nullptr && argnode->head != nullptr; argnode = argnode->tail) {
                     auto argTy = tbl.lookTy(argnode->head->type);
                     if(argTy == nullptr)
                         error(cur->pos, "there is no type named " + argnode->head->type);
+                    // erase named types.
+                    argnode->head->type = argTy->name;
                     argTys.push_back(argTy);
                 }
                 tbl.decFunc(cur->name, argTys, resTy);
