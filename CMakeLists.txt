@@ -7,10 +7,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 SET(CMAKE_BUILD_TYPE "Debug") 
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb")
 
+# include llvm
+find_package(LLVM REQUIRED CONFIG)
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+llvm_map_components_to_libnames(llvm_libs support core irreader)
+target_link_libraries(${TARGET} ${llvm_libs})
+
 include_directories(include)
 set(LEXER_SRC src/lexer.cpp)
 set(PARSER_SRC src/parser.cpp)
 set(CHECKER_SRC src/symtbl.cpp src/tychecker.cpp)
+
 add_executable(lexer_test ${LEXER_SRC} test/lexer_test.cpp)
 add_executable(parser_test ${LEXER_SRC} ${PARSER_SRC} src/printabs.cpp test/parser_test.cpp)
 add_executable(checker_test ${LEXER_SRC} ${PARSER_SRC} ${CHECKER_SRC} src/printabs.cpp test/tychecker_test.cpp)
