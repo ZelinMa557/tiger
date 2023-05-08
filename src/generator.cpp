@@ -23,6 +23,7 @@ Value *generator::genExp(A_exp *exp) {
     case A_exp::type::BreakExp: return genBreakExp(dynamic_cast<A_BreakExp*>(exp));
     }
     assert(0);
+    return nullptr;
 }
 
 Value *generator::genVarExp(A_VarExp *exp) {
@@ -199,4 +200,24 @@ Value *generator::getStrConstant(std::string &str) {
     Type *charType = Type::getInt8PtrTy(context);
     Constant *strConstant = builder.CreateGlobalStringPtr(str);
     return strConstant;
+}
+
+void generator::beginScope() {
+    tenv.begin();
+    venv.begin();
+    fenv.begin();
+}
+
+void generator::endScope() {
+    tenv.pop();
+    venv.pop();
+    fenv.pop();
+}
+
+void generator::createNamedValue(std::string name, Value *value) {
+    venv.put(name, value);
+}
+
+Value *generator::getNamedValue(std::string name) {
+    return venv.get(name);
 }

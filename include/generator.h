@@ -12,13 +12,43 @@
 #include "abstract.h"
 #include <memory>
 #include <unordered_map>
+#include <vector>
 using namespace llvm;
+template <typename T>
+class tbl {
+private:
+    std::unordered_map<std::string, std::vector<T*>> store;
+    std::vector<std::string> q;
+public:
+    void put(std::string key, T *value) { store[key].push_back(value); };
+    T *get(std::string &key) {
+        if(store.count(key))
+            return store[key].back();
+        return nullptr;
+    };
+    void pop() {
+        while(q.size() && q.back() != "") {
+            store[q.back()].pop_back();
+            if(store[q.back()].empty())
+                store.erase(q.back());
+            q.pop_back();
+        }
+        if(!q.empty())
+            q.pop_back();
+    };
+    void begin() { q.push_back(""); };
+};
+
 class generator {
 private:
     LLVMContext context;
     IRBuilder<> builder;
     std::unique_ptr<Module> module;
     A_exp *syntax_tree;
+
+    tbl<Value> venv;
+    tbl<Type> tenv;
+    tbl<Function> fenv;
 
     Value *genExp(A_exp *exp);
     Value *genVarExp(A_VarExp *exp);
