@@ -1,6 +1,9 @@
 #include "generator.h"
 #include <assert.h>
+#include <vector>
 Value *generator::genExp(A_exp *exp) {
+    if(!exp)
+        return nullptr;
     switch (exp->ty)
     {
     case A_exp::type::VarExp: return genVarExp(dynamic_cast<A_VarExp*>(exp));
@@ -27,7 +30,7 @@ Value *generator::genVarExp(A_VarExp *exp) {
 }
 
 Value *generator::genNilExp(A_NilExp *exp) {
-
+    return ConstantInt::get(context, APInt(32, 0, true));
 }
 
 Value *generator::genIntExp(A_IntExp *exp) {
@@ -35,11 +38,16 @@ Value *generator::genIntExp(A_IntExp *exp) {
 }
 
 Value *generator::genStringExp(A_StringExp *exp) {
-    return ConstantDataArray::getString(context, exp->s);
+    return getStrConstant(exp->s);
 }
 
 Value *generator::genCallExp(A_CallExp *exp) {
-
+    Function *callee = module->getFunction(exp->func);
+    std::vector<Value*> args;
+    for(auto l = exp->args; l != nullptr && l->head != nullptr; l = l->tail) {
+        args.push_back(genExp(l->head));
+    }
+    return builder.CreateCall(callee, args);
 }
 
 Value *generator::genOpExp(A_OpExp *exp) {
@@ -69,7 +77,12 @@ Value *generator::genRecordExp(A_RecordExp *exp) {
 }
 
 Value *generator::genSeqExp(A_SeqExp *exp) {
-
+    auto list = exp->seq;
+    Value *res = nullptr;
+    while(list != nullptr && list->head != nullptr) {
+        res = genExp(list->head);
+    }
+    return res;
 }
 
 Value *generator::genAssignExp(A_AssignExp *exp) {
@@ -77,11 +90,49 @@ Value *generator::genAssignExp(A_AssignExp *exp) {
 }
 
 Value *generator::genIfExp(A_IfExp *exp) {
+    Value *CondV = genExp(exp->test);
+    assert(CondV != nullptr);
 
+    Function *TheFunction = builder.GetInsertBlock()->getParent();
+    BasicBlock *ThenBB = BasicBlock::Create(context, "then", TheFunction);
+    BasicBlock *ElseBB = BasicBlock::Create(context, "else", TheFunction);
+    BasicBlock *MergeBB = BasicBlock::Create(context, "ifcond", TheFunction);
+    builder.CreateCondBr(CondV, ThenBB, ElseBB);
+
+    // generate then cond
+    builder.SetInsertPoint(ThenBB);
+    genExp(exp->then);
+    builder.CreateBr(MergeBB);
+    builder.SetInsertPoint(MergeBB);
+
+    // generate else cond
+    builder.SetInsertPoint(ElseBB);
+    genExp(exp->elsee);
+    builder.CreateBr(MergeBB);
+    builder.SetInsertPoint(MergeBB);
+
+    return nullptr;
 }
 
 Value *generator::genWhileExp(A_WhileExp *exp) {
+    Function *TheFunction = builder.GetInsertBlock()->getParent();
+    BasicBlock *CondBB = BasicBlock::Create(context, "wcond", TheFunction);
+    BasicBlock *WhileBodyBB = BasicBlock::Create(context, "wbody", TheFunction);
+    BasicBlock *EndBB = BasicBlock::Create(context, "wend", TheFunction);
 
+    builder.CreateBr(CondBB);
+    builder.SetInsertPoint(CondBB);
+    Value *cond = genExp(exp->test);
+    assert(cond != nullptr);
+    builder.CreateCondBr(cond, WhileBodyBB, EndBB);
+
+    builder.SetInsertPoint(WhileBodyBB);
+    genExp(exp->body);
+    builder.CreateBr(CondBB);
+
+    builder.SetInsertPoint(EndBB);
+
+    return nullptr;
 }
 
 Value *generator::genLetExp(A_LetExp *exp) {
@@ -89,7 +140,36 @@ Value *generator::genLetExp(A_LetExp *exp) {
 }
 
 Value *generator::genForExp(A_ForExp *exp) {
+    beginScope();
+    Function *TheFunction = builder.GetInsertBlock()->getParent();
+    BasicBlock *InitBB = BasicBlock::Create(context, "finit", TheFunction);
+    BasicBlock *CondBB = BasicBlock::Create(context, "fcond", TheFunction);
+    BasicBlock *ForBodyBB = BasicBlock::Create(context, "fbody", TheFunction);
+    BasicBlock *EndBB = BasicBlock::Create(context, "fend", TheFunction);
 
+    // init "i"
+    builder.CreateBr(InitBB);
+    builder.SetInsertPoint(InitBB);
+    Value *low = genExp(exp->lo);
+    assert(low != nullptr);
+    createNamedValue(exp->var, low);
+    builder.CreateBr(CondBB);
+
+    builder.SetInsertPoint(CondBB);
+    Value *high = genExp(exp->hi);
+    assert(high != nullptr);
+    Value *CondV = builder.CreateICmpSLE(getNamedValue(exp->var), high);
+    builder.CreateCondBr(CondV, ForBodyBB, EndBB);
+
+    builder.SetInsertPoint(ForBodyBB);
+    genExp(exp->body);
+    // "i++"
+    builder.CreateAdd(getNamedValue(exp->var), ConstantInt::get(context, APInt(32, 1, true)));
+    builder.CreateBr(CondBB);
+
+    builder.SetInsertPoint(EndBB);
+    endScope();
+    return nullptr;
 }
 
 Value *generator::genArrayExp(A_ArrayExp *exp) {
@@ -98,4 +178,10 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
 
 Value *generator::genBreakExp(A_BreakExp *exp) {
 
+}
+
+Value *generator::getStrConstant(std::string &str) {
+    Type *charType = Type::getInt8PtrTy(context);
+    Constant *strConstant = builder.CreateGlobalStringPtr(str);
+    return strConstant;
 }

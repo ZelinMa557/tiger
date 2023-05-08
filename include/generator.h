@@ -18,7 +18,6 @@ private:
     LLVMContext context;
     IRBuilder<> builder;
     std::unique_ptr<Module> module;
-    std::unordered_map<std::string, Value *> named_values;
     A_exp *syntax_tree;
 
     Value *genExp(A_exp *exp);
@@ -37,8 +36,16 @@ private:
     Value *genForExp(A_ForExp *exp);
     Value *genArrayExp(A_ArrayExp *exp);
     Value *genBreakExp(A_BreakExp *exp);
+
+    // aux funcs
+    void beginScope();
+    void endScope();
+    Value *getStrConstant(std::string &str);
+    void createNamedValue(std::string name, Value *value);
+    Value *getNamedValue(std::string name);
+
 public:
     generator() = delete;
-    generator(A_exp *exp) : syntax_tree(exp) {};
+    generator(A_exp *exp) : builder(context), syntax_tree(exp) {};
 
 };
