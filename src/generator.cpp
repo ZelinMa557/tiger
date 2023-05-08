@@ -26,7 +26,22 @@ Value *generator::genExp(A_exp *exp) {
 }
 
 Value *generator::genVarExp(A_VarExp *exp) {
-
+    switch (exp->var->ty)
+    {
+    case A_var::type::SIMPLE:
+        {
+            auto var = dynamic_cast<A_SimpleVar*>(exp->var);
+            return getNamedValue(var->sym);
+        }
+    case A_var::type::FIELD:
+        {
+            auto var = dynamic_cast<A_FieldVar*>(exp->var);
+        }
+    case A_var::type::SUBSCRIPT:
+        {
+            auto var = dynamic_cast<A_SubscriptVar*>(exp->var);
+        }
+    }
 }
 
 Value *generator::genNilExp(A_NilExp *exp) {
