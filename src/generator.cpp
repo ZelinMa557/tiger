@@ -152,7 +152,13 @@ Value *generator::genWhileExp(A_WhileExp *exp) {
 }
 
 Value *generator::genLetExp(A_LetExp *exp) {
-
+    beginScope();
+    for(auto l = exp->decs; l != nullptr; l = l->tail) {
+        if(l->head != nullptr)
+            genDec(l->head);
+    }
+    genExp(exp->body);
+    endScope();
 }
 
 Value *generator::genForExp(A_ForExp *exp) {
@@ -200,6 +206,44 @@ Value *generator::getStrConstant(std::string &str) {
     Type *charType = Type::getInt8PtrTy(context);
     Constant *strConstant = builder.CreateGlobalStringPtr(str);
     return strConstant;
+}
+
+void generator::genVarDec(A_VarDec *dec) {
+
+}
+
+void generator::genTypeDec(A_TypeDec *dec) {
+    auto l = dec->type;
+    for(; l != nullptr && l->head != nullptr; l = l->tail) {
+        auto cur = l->head;
+        if(cur->ty->ty == A_ty::type::ArrayTy) {
+
+        } else if(cur->ty->ty == A_ty::type::RecordTy) {
+
+        }
+    }
+
+    for(l = dec->type; l != nullptr && l->head != nullptr; l = l->tail) {
+        auto cur = l->head;
+        if(cur->ty->ty == A_ty::type::ArrayTy) {
+
+        } else if(cur->ty->ty == A_ty::type::RecordTy) {
+
+        }
+    }
+}
+
+void generator::genFuncDec(A_FunctionDec *dec) {
+
+}
+
+void generator::genDec(A_dec *dec) {
+    switch (dec->ty)
+    {
+    case A_dec::type::VARD: genVarDec(dynamic_cast<A_VarDec*>(dec)); break;
+    case A_dec::type::FUNCDS: genFuncDec(dynamic_cast<A_FunctionDec*>(dec)); break;
+    case A_dec::type::TYDS: genTypeDec(dynamic_cast<A_TypeDec*>(dec)); break;
+    }
 }
 
 void generator::beginScope() {

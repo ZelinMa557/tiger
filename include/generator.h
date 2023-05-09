@@ -67,6 +67,11 @@ private:
     Value *genArrayExp(A_ArrayExp *exp);
     Value *genBreakExp(A_BreakExp *exp);
 
+    void genVarDec(A_VarDec *dec);
+    void genTypeDec(A_TypeDec *dec);
+    void genFuncDec(A_FunctionDec *dec);
+    void genDec(A_dec *dec);
+
     // aux funcs
     void beginScope();
     void endScope();
