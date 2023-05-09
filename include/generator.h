@@ -45,6 +45,7 @@ private:
     IRBuilder<> builder;
     std::unique_ptr<Module> module;
     A_exp *syntax_tree;
+    std::vector<BasicBlock*> loop_stack;
 
     tbl<Value> venv;
     tbl<Type> tenv;

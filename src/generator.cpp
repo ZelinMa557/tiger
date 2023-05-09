@@ -117,17 +117,23 @@ Value *generator::genIfExp(A_IfExp *exp) {
 
     // generate then cond
     builder.SetInsertPoint(ThenBB);
-    genExp(exp->then);
+    Value *ThenV = genExp(exp->then);
     builder.CreateBr(MergeBB);
     builder.SetInsertPoint(MergeBB);
 
     // generate else cond
     builder.SetInsertPoint(ElseBB);
-    genExp(exp->elsee);
+    Value *ElseV = genExp(exp->elsee);
     builder.CreateBr(MergeBB);
     builder.SetInsertPoint(MergeBB);
 
-    return nullptr;
+    if(exp->elsee == nullptr)
+        return nullptr;
+    
+    PHINode *node = builder.CreatePHI(ThenV->getType(), 2, "iftmp");
+    node->addIncoming(ThenV, ThenBB);
+    node->addIncoming(ElseV, ElseBB);
+    return node;
 }
 
 Value *generator::genWhileExp(A_WhileExp *exp) {
@@ -135,6 +141,7 @@ Value *generator::genWhileExp(A_WhileExp *exp) {
     BasicBlock *CondBB = BasicBlock::Create(context, "wcond", TheFunction);
     BasicBlock *WhileBodyBB = BasicBlock::Create(context, "wbody", TheFunction);
     BasicBlock *EndBB = BasicBlock::Create(context, "wend", TheFunction);
+    loop_stack.push_back(EndBB);
 
     builder.CreateBr(CondBB);
     builder.SetInsertPoint(CondBB);
@@ -147,6 +154,7 @@ Value *generator::genWhileExp(A_WhileExp *exp) {
     builder.CreateBr(CondBB);
 
     builder.SetInsertPoint(EndBB);
+    loop_stack.pop_back();
 
     return nullptr;
 }
@@ -168,6 +176,7 @@ Value *generator::genForExp(A_ForExp *exp) {
     BasicBlock *CondBB = BasicBlock::Create(context, "fcond", TheFunction);
     BasicBlock *ForBodyBB = BasicBlock::Create(context, "fbody", TheFunction);
     BasicBlock *EndBB = BasicBlock::Create(context, "fend", TheFunction);
+    loop_stack.push_back(EndBB);
 
     // init "i"
     builder.CreateBr(InitBB);
@@ -191,6 +200,7 @@ Value *generator::genForExp(A_ForExp *exp) {
 
     builder.SetInsertPoint(EndBB);
     endScope();
+    loop_stack.pop_back();
     return nullptr;
 }
 
@@ -199,7 +209,14 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
 }
 
 Value *generator::genBreakExp(A_BreakExp *exp) {
-
+    // ignore invalid break
+    if(!loop_stack.empty()) {
+        builder.CreateBr(loop_stack.back());
+        Function *TheFunction = builder.GetInsertBlock()->getParent();
+        BasicBlock *BreakCondBB = BasicBlock::Create(context, "break", TheFunction);
+        builder.SetInsertPoint(BreakCondBB);
+    }
+    return nullptr;
 }
 
 Value *generator::getStrConstant(std::string &str) {
@@ -219,7 +236,7 @@ void generator::genTypeDec(A_TypeDec *dec) {
         if(cur->ty->ty == A_ty::type::ArrayTy) {
 
         } else if(cur->ty->ty == A_ty::type::RecordTy) {
-
+  
         }
     }
 
