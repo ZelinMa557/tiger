@@ -233,19 +233,18 @@ void generator::genTypeDec(A_TypeDec *dec) {
     auto l = dec->type;
     for(; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
-        if(cur->ty->ty == A_ty::type::ArrayTy) {
-
-        } else if(cur->ty->ty == A_ty::type::RecordTy) {
-  
+        if(cur->ty->ty == A_ty::type::ArrayTy 
+                || cur->ty->ty == A_ty::type::RecordTy) {
+            tenv.put(cur->name, convertLlvmType(cur->ty));
         }
     }
 
     for(l = dec->type; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
-        if(cur->ty->ty == A_ty::type::ArrayTy) {
-
-        } else if(cur->ty->ty == A_ty::type::RecordTy) {
-
+        auto cur = l->head;
+        if(cur->ty->ty == A_ty::type::ArrayTy 
+                || cur->ty->ty == A_ty::type::RecordTy) {
+            tenv.redirect(cur->name, convertLlvmType(cur->ty));
         }
     }
 }
@@ -261,6 +260,35 @@ void generator::genDec(A_dec *dec) {
     case A_dec::type::FUNCDS: genFuncDec(dynamic_cast<A_FunctionDec*>(dec)); break;
     case A_dec::type::TYDS: genTypeDec(dynamic_cast<A_TypeDec*>(dec)); break;
     }
+}
+
+Type *generator::convertLlvmType(A_ty *ty) {
+    if(ty->ty == A_ty::type::RecordTy) {
+        auto t = dynamic_cast<A_RecordTy*>(ty);
+        std::vector<Type*> fields;
+        for(auto l = t->record; l != nullptr; l = l->tail) {
+            if(l->head == nullptr)
+                break;
+            if(l->head->type == "int")
+                fields.push_back(llvm::Type::getInt32Ty(context));
+            else if(l->head->type == "string")
+                fields.push_back(llvm::Type::getInt8PtrTy(context));
+            else
+                fields.push_back(tenv.get(l->head->type));
+        }
+        return llvm::StructType::get(context, fields);
+    }
+    else if(ty->ty == A_ty::type::ArrayTy) {
+        auto t = dynamic_cast<A_ArrayTy*>(ty);
+        if(t->array == "int")
+            return llvm::ArrayType::get(llvm::Type::getInt32Ty(context), 0);
+        else if(t->array == "string")
+            return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), 0);
+        else
+            return llvm::ArrayType::get(tenv.get(t->array), 0);
+    }
+    assert(0);
+    return nullptr;
 }
 
 void generator::beginScope() {

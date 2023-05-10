@@ -21,6 +21,10 @@ private:
     std::vector<std::string> q;
 public:
     void put(std::string key, T *value) { store[key].push_back(value); };
+    void redirect(std::string key, T *value) {
+        T* &t = store[key].back();
+        t = value;
+    }
     T *get(std::string &key) {
         if(store.count(key))
             return store[key].back();
@@ -79,6 +83,8 @@ private:
     Value *getStrConstant(std::string &str);
     void createNamedValue(std::string name, Value *value);
     Value *getNamedValue(std::string name);
+
+    Type *convertLlvmType(A_ty *ty);
 
 public:
     generator() = delete;
