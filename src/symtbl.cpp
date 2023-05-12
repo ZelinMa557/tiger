@@ -19,6 +19,9 @@ symtbl::symtbl() {
     fenv["concat"].push_back({string_ty, string_ty, string_ty});
     fenv["not"].push_back({int_ty, int_ty});
     fenv["exit"].push_back({void_ty, int_ty});
+
+    fenv["puti"].push_back({void_ty, int_ty});
+    fenv["getint"].push_back({int_ty});
 }
 
 void symtbl::beginScope() {
