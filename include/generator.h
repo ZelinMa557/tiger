@@ -80,11 +80,13 @@ private:
     // aux funcs
     void beginScope();
     void endScope();
+    void initFenv();
     Value *getStrConstant(std::string &str);
     void createNamedValue(std::string name, Value *value);
     Value *getNamedValue(std::string name);
 
     Type *convertLlvmType(A_ty *ty);
+    Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
 
 public:
     generator() = delete;

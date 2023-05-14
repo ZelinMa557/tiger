@@ -262,6 +262,12 @@ void generator::genDec(A_dec *dec) {
     }
 }
 
+Function *generator::createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty) {
+    auto functionType = FunctionType::get(ret_ty, arg_tys, false);
+    auto func = Function::Create(functionType, Function::ExternalLinkage, name, module.get());
+    return func;
+}
+
 Type *generator::convertLlvmType(A_ty *ty) {
     if(ty->ty == A_ty::type::RecordTy) {
         auto t = dynamic_cast<A_RecordTy*>(ty);
@@ -283,7 +289,7 @@ Type *generator::convertLlvmType(A_ty *ty) {
         if(t->array == "int")
             return llvm::ArrayType::get(llvm::Type::getInt32Ty(context), 0);
         else if(t->array == "string")
-            return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), 0);
+            return llvm::ArrayType::get(llvm::Type::getInt8PtrTy(context), 0);
         else
             return llvm::ArrayType::get(tenv.get(t->array), 0);
     }
@@ -309,4 +315,22 @@ void generator::createNamedValue(std::string name, Value *value) {
 
 Value *generator::getNamedValue(std::string name) {
     return venv.get(name);
+}
+
+void generator::initFenv() {
+    llvm::Type *intType{llvm::Type::getInt32Ty(context)};
+    llvm::Type *voidType{llvm::Type::getVoidTy(context)};
+    llvm::Type *stringType{llvm::Type::getInt8PtrTy(context)};
+
+    fenv.put("print", createIntrinsicFunction("__print__", {stringType}, voidType));
+    fenv.put("puti", createIntrinsicFunction("__puti__", {intType}, voidType));
+    fenv.put("flush", createIntrinsicFunction("__flush__", {}, voidType));
+    fenv.put("getchar", createIntrinsicFunction("__getchar__", {}, voidType));
+    fenv.put("getint", createIntrinsicFunction("__getint__", {}, intType));
+    fenv.put("ord", createIntrinsicFunction("__ord__", {stringType}, intType));
+    fenv.put("size", createIntrinsicFunction("__size__", {stringType}, intType));
+    fenv.put("substring", createIntrinsicFunction("__substring__", {stringType, intType, intType}, stringType));
+    fenv.put("concat", createIntrinsicFunction("__concat__", {stringType, stringType}, stringType));
+    fenv.put("not", createIntrinsicFunction("__not__", {intType}, voidType));
+    fenv.put("exit", createIntrinsicFunction("__exit__", {intType}, voidType));
 }
