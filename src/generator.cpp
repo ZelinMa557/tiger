@@ -1,4 +1,5 @@
 #include "generator.h"
+#include "MyPointerType.hpp"
 #include <assert.h>
 #include <vector>
 Value *generator::genExp(A_exp *exp) {
@@ -59,6 +60,7 @@ Value *generator::genStringExp(A_StringExp *exp) {
 }
 
 Value *generator::genCallExp(A_CallExp *exp) {
+    // todo
     Function *callee = module->getFunction(exp->func);
     std::vector<Value*> args;
     for(auto l = exp->args; l != nullptr && l->head != nullptr; l = l->tail) {
@@ -243,7 +245,9 @@ Value *generator::genForExp(A_ForExp *exp) {
     builder.SetInsertPoint(ForBodyBB);
     genExp(exp->body);
     // "i++"
-    builder.CreateAdd(getNamedValue(exp->var), ConstantInt::get(context, APInt(64, 1, true)));
+    builder.CreateStore(
+        builder.CreateAdd(getNamedValue(exp->var), ConstantInt::get(context, APInt(64, 1, true))),
+        getNamedValue(exp->var));
     builder.CreateBr(CondBB);
 
     builder.SetInsertPoint(EndBB);
@@ -276,7 +280,8 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     // init "i"
     builder.CreateBr(InitBB);
     builder.SetInsertPoint(InitBB);
-    Value *index = ConstantInt::get(Type::getInt64Ty(context), 42);;
+    Value *index = builder.CreateAlloca(builder.getInt64Ty(), nullptr);
+    builder.CreateStore(builder.getInt64(0), index);
     builder.CreateBr(CondBB);
 
     // "i < len"
@@ -287,9 +292,12 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     // "arr[i] = init_val"
     builder.SetInsertPoint(ForBodyBB);
     auto element = builder.CreateGEP(elementType, ptr, index);
+    builder.CreateStore(initValue, element);
 
     // "index++"
-    builder.CreateAdd(index, ConstantInt::get(context, APInt(64, 1, true)));
+    builder.CreateStore(
+        builder.CreateAdd(index, ConstantInt::get(context, APInt(64, 1, true))),
+        index);
     builder.CreateBr(CondBB);
     builder.SetInsertPoint(EndBB);
     return ptr;
@@ -313,26 +321,47 @@ Value *generator::getStrConstant(std::string &str) {
 }
 
 void generator::genVarDec(A_VarDec *dec) {
-//todo
+    Value *initValue = genExp(dec->init);
+    createNamedValue(dec->var, initValue);
 }
 
 void generator::genTypeDec(A_TypeDec *dec) {
     auto l = dec->type;
     for(; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
-        if(cur->ty->ty == A_ty::type::ArrayTy 
-                || cur->ty->ty == A_ty::type::RecordTy) {
-            tenv.put(cur->name, convertLlvmType(cur->ty));
+        if(cur->ty->ty == A_ty::type::RecordTy) {
+            tenv.put(cur->name, llvm::StructType::create(context, cur->name));
+            tdecs.put(cur->name, cur->ty);
+        } else if(cur->ty->ty == A_ty::type::ArrayTy) {
+            tenv.put(cur->name, MyPointerType::create(context, cur->name));
             tdecs.put(cur->name, cur->ty);
         }
     }
 
     for(l = dec->type; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
-        auto cur = l->head;
-        if(cur->ty->ty == A_ty::type::ArrayTy 
-                || cur->ty->ty == A_ty::type::RecordTy) {
-            tenv.redirect(cur->name, convertLlvmType(cur->ty));
+        if(cur->ty->ty == A_ty::type::RecordTy) {
+            auto t = dynamic_cast<A_RecordTy*>(cur->ty);
+            std::vector<Type*> fields;
+            for(auto l = t->record; l != nullptr; l = l->tail) {
+                if(l->head == nullptr)
+                    break;
+                if(l->head->type == "int")
+                    fields.push_back(llvm::Type::getInt64Ty(context));
+                else if(l->head->type == "string")
+                    fields.push_back(llvm::Type::getInt8PtrTy(context));
+                else
+                    fields.push_back(tenv.get(l->head->type));
+            }
+            auto structType = llvm::cast<StructType>(tenv.get(cur->name));
+            assert(structType != nullptr && structType->isStructTy());
+            structType->setBody(fields);
+        } else if(cur->ty->ty == A_ty::type::ArrayTy) {
+            auto t = dynamic_cast<A_ArrayTy*>(cur->ty);
+            auto elementType = tenv.get(cur->name);
+            auto pointerType = llvm::cast<MyPointerType>(tenv.get(cur->name));
+            assert(elementType != nullptr && pointerType != nullptr && pointerType->isPointerTy());
+            pointerType->setElementType(elementType);
         }
     }
 }
@@ -356,36 +385,6 @@ Function *generator::createIntrinsicFunction(std::string name, std::vector<Type*
     return func;
 }
 
-Type *generator::convertLlvmType(A_ty *ty) {
-    if(ty->ty == A_ty::type::RecordTy) {
-        auto t = dynamic_cast<A_RecordTy*>(ty);
-        std::vector<Type*> fields;
-        for(auto l = t->record; l != nullptr; l = l->tail) {
-            if(l->head == nullptr)
-                break;
-            if(l->head->type == "int")
-                fields.push_back(llvm::Type::getInt64Ty(context));
-            else if(l->head->type == "string")
-                fields.push_back(llvm::Type::getInt8PtrTy(context));
-            else
-                fields.push_back(tenv.get(l->head->type));
-        }
-        Type *structType = llvm::StructType::get(context, fields);
-        return llvm::PointerType::get(structType, 0);
-    }
-    else if(ty->ty == A_ty::type::ArrayTy) {
-        auto t = dynamic_cast<A_ArrayTy*>(ty);
-        if(t->array == "int")
-            return llvm::Type::getInt64PtrTy(context);
-        else if(t->array == "string")
-            return llvm::PointerType::get(llvm::Type::getInt8PtrTy(context), 0);
-        else
-            return llvm::PointerType::get(tenv.get(t->array), 0);
-    }
-    assert(0);
-    return nullptr;
-}
-
 Value *generator::convertTypedNil(Type *type) {
     return llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(type));
 }
@@ -405,7 +404,8 @@ void generator::endScope() {
 }
 
 void generator::createNamedValue(std::string name, Value *value) {
-    venv.put(name, value);
+    Value *namedValue = builder.CreateAlloca(value->getType(), value);
+    venv.put(name, namedValue);
 }
 
 Value *generator::getNamedValue(std::string name) {
@@ -432,4 +432,4 @@ void generator::initFenv() {
 }
 
 
-// todo: array exp, tydec.
+// todo: tydec.

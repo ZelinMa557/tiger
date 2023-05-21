@@ -21,10 +21,6 @@ private:
     std::vector<std::string> q;
 public:
     void put(std::string key, T *value) { store[key].push_back(value); };
-    void redirect(std::string key, T *value) {
-        T* &t = store[key].back();
-        t = value;
-    }
     T *get(std::string &key) {
         if(store.count(key))
             return store[key].back();
@@ -89,8 +85,8 @@ private:
     Type *getFieldType(std::string name, A_RecordTy *ty);
     Value *convertTypedNil(Type *type);
 
-    Type *convertLlvmType(A_ty *ty);
     Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
+    Value *genLeftValue(A_var *var);
 
 public:
     generator() = delete;
