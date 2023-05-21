@@ -53,6 +53,7 @@ private:
 
     tbl<Value> venv;
     tbl<Type> tenv;
+    tbl<A_ty> tdecs;
     tbl<Function> fenv;
 
     Value *genExp(A_exp *exp);
@@ -84,6 +85,9 @@ private:
     Value *getStrConstant(std::string &str);
     void createNamedValue(std::string name, Value *value);
     Value *getNamedValue(std::string name);
+    int getIdxInRecordTy(std::string name, A_RecordTy *ty);
+    Type *getFieldType(std::string name, A_RecordTy *ty);
+    Value *convertTypedNil(Type *type);
 
     Type *convertLlvmType(A_ty *ty);
     Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
