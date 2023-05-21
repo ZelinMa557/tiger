@@ -430,3 +430,6 @@ void generator::initFenv() {
     fenv.put("exit", createIntrinsicFunction("__exit__", {intType}, voidType));
     fenv.put("alloc", createIntrinsicFunction("alloc", {intType}, stringType));
 }
+
+
+// todo: array exp, tydec.
