@@ -263,7 +263,7 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     auto initValue = genExp(exp->init);
 
     // allocate space for the array
-    auto elementType = llvm::cast<llvm::PointerType>(type)->getElementType();
+    auto elementType = llvm::cast<MyPointerType>(type)->getElementType();
     auto size = module->getDataLayout().getTypeAllocSize(elementType);
     Value *sz = llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, size));
     std::string allocator{"alloca"};
@@ -333,7 +333,7 @@ void generator::genTypeDec(A_TypeDec *dec) {
             tenv.put(cur->name, llvm::StructType::create(context, cur->name));
             tdecs.put(cur->name, cur->ty);
         } else if(cur->ty->ty == A_ty::type::ArrayTy) {
-            tenv.put(cur->name, MyPointerType::create(context, cur->name));
+            tenv.put(cur->name, MyPointerType::create(context));
             tdecs.put(cur->name, cur->ty);
         }
     }
