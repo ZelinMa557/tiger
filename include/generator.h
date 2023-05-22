@@ -88,6 +88,8 @@ private:
     Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
     Value *genLeftValue(A_var *var);
 
+    Type *NilTy = PointerType::getUnqual(Type::getVoidTy(context));
+
 public:
     generator() = delete;
     generator(A_exp *exp) : builder(context), syntax_tree(exp) {};

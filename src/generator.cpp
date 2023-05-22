@@ -2,6 +2,12 @@
 #include "MyPointerType.hpp"
 #include <assert.h>
 #include <vector>
+#include <iostream>
+void error(std::string err) {
+    std::cerr << err << std::endl;
+    exit(1);
+}
+
 Value *generator::genExp(A_exp *exp) {
     if(!exp)
         return nullptr;
@@ -47,8 +53,27 @@ Value *generator::genVarExp(A_VarExp *exp) {
     }
 }
 
+Value *generator::genLeftValue(A_var *var) {
+    switch (var->ty)
+    {
+    case A_var::type::SIMPLE:
+        {
+            auto v = dynamic_cast<A_SimpleVar*>(var);
+            return getNamedValue(v->sym);
+        }
+    case A_var::type::FIELD:
+        {
+            auto v = dynamic_cast<A_FieldVar*>(var);
+        }
+    case A_var::type::SUBSCRIPT:
+        {
+            auto v = dynamic_cast<A_SubscriptVar*>(var);
+        }
+    }
+}
+
 Value *generator::genNilExp(A_NilExp *exp) {
-    return ConstantInt::get(context, APInt(64, 0, true));
+    return ConstantPointerNull::get(llvm::cast<PointerType>(NilTy));
 }
 
 Value *generator::genIntExp(A_IntExp *exp) {
@@ -60,8 +85,8 @@ Value *generator::genStringExp(A_StringExp *exp) {
 }
 
 Value *generator::genCallExp(A_CallExp *exp) {
-    // todo
-    Function *callee = module->getFunction(exp->func);
+    Function *callee = fenv.get(exp->func);
+    assert(callee != nullptr);
     std::vector<Value*> args;
     for(auto l = exp->args; l != nullptr && l->head != nullptr; l = l->tail) {
         args.push_back(genExp(l->head));
@@ -367,7 +392,47 @@ void generator::genTypeDec(A_TypeDec *dec) {
 }
 
 void generator::genFuncDec(A_FunctionDec *dec) {
-//todo
+    auto l = dec->function;
+    for(; l != nullptr && l->head != nullptr; l = l->tail) {
+        auto cur = l->head;
+        Type *retTy = nullptr;
+        if(cur->result.length() == 0)
+            retTy = llvm::Type::getVoidTy(context);
+        else
+            retTy = tenv.get(cur->name);
+        assert(retTy != nullptr);
+
+        std::vector<Type*> paramTys;
+        for(auto params = cur->params; params != nullptr && params->head != nullptr; params = params->tail) {
+            Type *t = tenv.get(params->head->type);
+            assert(t != nullptr);
+            paramTys.push_back(t);
+        }
+        auto functionType = FunctionType::get(retTy, paramTys, false);
+        auto func = Function::Create(functionType, Function::InternalLinkage, cur->name, module.get());
+        fenv.put(cur->name, func);
+    }
+
+    for(l = dec->function; l != nullptr && l->head != nullptr; l = l->tail) {
+        auto cur = l->head;
+        beginScope();
+        Function *TheFunction = fenv.get(cur->name);
+        assert(TheFunction != nullptr);
+        BasicBlock *Body = BasicBlock::Create(context, "entry", TheFunction);
+        builder.SetInsertPoint(Body);
+
+        auto params = cur->params;
+        for(auto &Arg : TheFunction->args()) {
+            assert(params && params->head);
+            createNamedValue(params->head->name, &Arg);
+            params = params->tail;
+        }
+        Value *retVal = genExp(cur->body);
+        builder.CreateRet(retVal);
+        if(!verifyFunction(*TheFunction))
+            error("Generator: Fail to generate function " + cur->name);
+        endScope();
+    }
 }
 
 void generator::genDec(A_dec *dec) {
@@ -430,6 +495,3 @@ void generator::initFenv() {
     fenv.put("exit", createIntrinsicFunction("__exit__", {intType}, voidType));
     fenv.put("alloc", createIntrinsicFunction("alloc", {intType}, stringType));
 }
-
-
-// todo: tydec.
