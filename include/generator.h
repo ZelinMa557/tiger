@@ -50,6 +50,7 @@ private:
     tbl<Value> venv;
     tbl<Type> tenv;
     tbl<A_ty> tdecs;
+    tbl<A_VarDec> vdecs;
     tbl<Function> fenv;
 
     Value *genExp(A_exp *exp);
@@ -83,10 +84,11 @@ private:
     Value *getNamedValue(std::string name);
     int getIdxInRecordTy(std::string name, A_RecordTy *ty);
     Type *getFieldType(std::string name, A_RecordTy *ty);
+    A_ty *getFieldTypeDec(std::string name, A_RecordTy *ty);
     Value *convertTypedNil(Type *type);
 
     Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
-    Value *genLeftValue(A_var *var);
+    std::pair<Value*, A_ty*> genLeftValue(A_var *var);
 
     Type *NilTy = PointerType::getUnqual(Type::getVoidTy(context));
 

@@ -34,7 +34,6 @@ Value *generator::genExp(A_exp *exp) {
 }
 
 Value *generator::genVarExp(A_VarExp *exp) {
-    //todo
     switch (exp->var->ty)
     {
     case A_var::type::SIMPLE:
@@ -45,29 +44,70 @@ Value *generator::genVarExp(A_VarExp *exp) {
     case A_var::type::FIELD:
         {
             auto var = dynamic_cast<A_FieldVar*>(exp->var);
+            auto parent = genLeftValue(var->var);
+            Value *parentValue = parent.first;
+            A_RecordTy *parentTypeDec = dynamic_cast<A_RecordTy*>(parent.second);
+            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::RecordTy);
+            int idx = getIdxInRecordTy(var->sym, parentTypeDec);
+            auto fieldTy = getFieldType(var->sym, parentTypeDec);
+            auto fieldPtr = builder.CreateGEP(parentValue->getType(), parentValue, 
+                                llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
+                                llvm::APInt(64, idx)));
+            return builder.CreateLoad(fieldTy, fieldPtr);
         }
     case A_var::type::SUBSCRIPT:
         {
             auto var = dynamic_cast<A_SubscriptVar*>(exp->var);
+            auto parent = genLeftValue(var->var);
+            Value *parentValue = parent.first;
+            A_ArrayTy *parentTypeDec = dynamic_cast<A_ArrayTy*>(parent.second);
+            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::ArrayTy);
+            Value *offset = genExp(var->exp);
+            auto elementTy = tenv.get(parentTypeDec->array);
+            assert(elementTy);
+            auto elementPtr = builder.CreateGEP(parentValue->getType(), parentValue, offset);
+            return builder.CreateLoad(elementTy, elementPtr);
         }
     }
+    assert(0);
+    return nullptr;
 }
 
-Value *generator::genLeftValue(A_var *var) {
+std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
     switch (var->ty)
     {
     case A_var::type::SIMPLE:
         {
             auto v = dynamic_cast<A_SimpleVar*>(var);
-            return getNamedValue(v->sym);
+            auto vdec = vdecs.get(v->sym);
+            return { getNamedValue(v->sym), tdecs.get(vdec->type) };
         }
     case A_var::type::FIELD:
         {
             auto v = dynamic_cast<A_FieldVar*>(var);
+            auto parent = genLeftValue(v->var);
+            Value *parentValue = parent.first;
+            A_RecordTy *parentTypeDec = dynamic_cast<A_RecordTy*>(parent.second);
+            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::RecordTy);
+            int idx = getIdxInRecordTy(v->sym, parentTypeDec);
+            A_ty *fieldType = getFieldTypeDec(v->sym, parentTypeDec);
+            auto fieldPtr = builder.CreateGEP(parentValue->getType(), parentValue, 
+                                llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
+                                llvm::APInt(64, idx)));
+            return { fieldPtr, fieldType };
         }
     case A_var::type::SUBSCRIPT:
         {
             auto v = dynamic_cast<A_SubscriptVar*>(var);
+            auto parent = genLeftValue(v->var);
+            Value *parentValue = parent.first;
+            A_ArrayTy *parentTypeDec = dynamic_cast<A_ArrayTy*>(parent.second);
+            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::ArrayTy);
+            Value *offset = genExp(v->exp);
+            auto elementTy = tdecs.get(parentTypeDec->array);
+            assert(elementTy);
+            auto elementPtr = builder.CreateGEP(parentValue->getType(), parentValue, offset);
+            return { elementPtr, elementTy };
         }
     }
 }
@@ -134,6 +174,16 @@ Type *generator::getFieldType(std::string name, A_RecordTy *ty) {
     }
     return nullptr;
 }
+
+A_ty *generator::getFieldTypeDec(std::string name, A_RecordTy *ty) {
+    auto list = ty->record;
+    for(; list != nullptr && list->head != nullptr; list = list->tail) {
+        if(list->head->name == name)
+            return tdecs.get(list->head->type);
+    }
+    return nullptr;
+}
+
 
 Value *generator::genRecordExp(A_RecordExp *exp) {
     auto type = tenv.get(exp->type);
@@ -348,6 +398,7 @@ Value *generator::getStrConstant(std::string &str) {
 void generator::genVarDec(A_VarDec *dec) {
     Value *initValue = genExp(dec->init);
     createNamedValue(dec->var, initValue);
+    vdecs.put(dec->var, dec);
 }
 
 void generator::genTypeDec(A_TypeDec *dec) {
@@ -459,12 +510,14 @@ void generator::beginScope() {
     venv.begin();
     fenv.begin();
     tdecs.begin();
+    vdecs.begin();
 }
 
 void generator::endScope() {
     tenv.pop();
     venv.pop();
     fenv.pop();
+    tdecs.pop();
     tdecs.pop();
 }
 
