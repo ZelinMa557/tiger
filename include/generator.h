@@ -8,6 +8,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
 
 #include "abstract.h"
 #include <memory>
@@ -44,7 +45,6 @@ private:
     LLVMContext context;
     IRBuilder<> builder;
     std::unique_ptr<Module> module;
-    A_exp *syntax_tree;
     std::vector<BasicBlock*> loop_stack;
 
     tbl<Value> venv;
@@ -93,7 +93,6 @@ private:
     Type *NilTy = PointerType::getUnqual(Type::getVoidTy(context));
 
 public:
-    generator() = delete;
-    generator(A_exp *exp) : builder(context), syntax_tree(exp) {};
-
+    generator() : builder(context) {};
+    void generate(A_exp *syntax_tree, std::string filename);
 };

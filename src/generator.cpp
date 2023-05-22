@@ -548,3 +548,22 @@ void generator::initFenv() {
     fenv.put("exit", createIntrinsicFunction("__exit__", {intType}, voidType));
     fenv.put("alloc", createIntrinsicFunction("alloc", {intType}, stringType));
 }
+
+void generator::generate(A_exp *syntax_tree, std::string filename) {
+    auto mainFunctionType = llvm::FunctionType::get(llvm::Type::getInt64Ty(context), false);
+    auto mainFunction =
+        llvm::Function::Create(mainFunctionType, llvm::GlobalValue::ExternalLinkage,
+                                "main", module.get());
+    auto block = BasicBlock::Create(context, "entry", mainFunction);
+    builder.SetInsertPoint(block);
+    genExp(syntax_tree);
+    builder.CreateRet(llvm::ConstantInt::get(Type::getInt64Ty(context), APInt(64, 0)));
+
+    std::error_code EC;
+    llvm::raw_fd_ostream OS {filename, EC};
+    if (EC) {
+        llvm::errs() << "Could not open file: " << EC.message() << "\n";
+        return;
+    }
+    llvm::WriteBitcodeToFile(*module.get(), OS);
+}
