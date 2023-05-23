@@ -1,19 +1,18 @@
-#include <cstring>
-#include <iostream>
-
-extern "C" {
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 // builtin functions for tiger.
 void __print__(char *s) {
-    std::printf("%s", s);
+    printf("%s", s);
 }
 
 void __puti__(size_t i) {
-    std::printf("%d", i);
+    printf("%d", i);
 }
 
 void __flush__() {
-    std::cout.flush();
+    fflush(stdout);
 }
 
 char* __getchar__() {
@@ -49,12 +48,12 @@ char* __chr__(size_t i) {
 }
 
 size_t __size__(char *s) {
-    return std::strlen(s);
+    return strlen(s);
 }
 
 char* __substring__(char *s, size_t first, size_t n) {
-    if((first + n) > std::strlen(s)) {
-        printf("runtime error: substring len %d, start %d, n %d\n", std::strlen(s), first, n);
+    if((first + n) > strlen(s)) {
+        printf("runtime error: substring len %d, start %d, n %d\n", strlen(s), first, n);
         exit(1);
     }
     char *substr = (char*)malloc((n+1) * sizeof(char));
@@ -64,8 +63,8 @@ char* __substring__(char *s, size_t first, size_t n) {
 }
 
 char* __concat__(char *s1, char *s2) {
-    size_t l1 = std::strlen(s1);
-    size_t l2 = std::strlen(s2);
+    size_t l1 = strlen(s1);
+    size_t l2 = strlen(s2);
     char *res = (char*)malloc((l1 + l2 + 1) * sizeof(char));
     res[l1+l2] = '\0';
     memcpy(res, s1, l1);
@@ -83,5 +82,4 @@ void __exit__(size_t i) {
 
 void *alloc(size_t sz) {
     return malloc(sz);
-}
 }
