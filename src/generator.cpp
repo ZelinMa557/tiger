@@ -34,43 +34,8 @@ Value *generator::genExp(A_exp *exp) {
 }
 
 Value *generator::genVarExp(A_VarExp *exp) {
-    switch (exp->var->ty)
-    {
-    case A_var::type::SIMPLE:
-        {
-            auto var = dynamic_cast<A_SimpleVar*>(exp->var);
-            return getNamedValue(var->sym);
-        }
-    case A_var::type::FIELD:
-        {
-            auto var = dynamic_cast<A_FieldVar*>(exp->var);
-            auto parent = genLeftValue(var->var);
-            Value *parentValue = parent.first;
-            A_RecordTy *parentTypeDec = dynamic_cast<A_RecordTy*>(parent.second);
-            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::RecordTy);
-            int idx = getIdxInRecordTy(var->sym, parentTypeDec);
-            auto fieldTy = getFieldType(var->sym, parentTypeDec);
-            auto fieldPtr = builder.CreateGEP(parentValue->getType(), parentValue, 
-                                llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
-                                llvm::APInt(64, idx)));
-            return builder.CreateLoad(fieldTy, fieldPtr);
-        }
-    case A_var::type::SUBSCRIPT:
-        {
-            auto var = dynamic_cast<A_SubscriptVar*>(exp->var);
-            auto parent = genLeftValue(var->var);
-            Value *parentValue = parent.first;
-            A_ArrayTy *parentTypeDec = dynamic_cast<A_ArrayTy*>(parent.second);
-            assert(parentTypeDec && parentTypeDec->ty == A_ty::type::ArrayTy);
-            Value *offset = genExp(var->exp);
-            auto elementTy = tenv.get(parentTypeDec->array);
-            assert(elementTy);
-            auto elementPtr = builder.CreateGEP(parentValue->getType(), parentValue, offset);
-            return builder.CreateLoad(elementTy, elementPtr);
-        }
-    }
-    assert(0);
-    return nullptr;
+    auto ptr = genLeftValue(exp->var);
+    return convertRightValue(ptr.first);
 }
 
 std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
@@ -86,38 +51,40 @@ std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
         {
             auto v = dynamic_cast<A_FieldVar*>(var);
             auto parent = genLeftValue(v->var);
-            Value *parentValue = parent.first;
+            Value *parentValue = convertRightValue(parent.first);
             A_RecordTy *parentTypeDec = dynamic_cast<A_RecordTy*>(parent.second);
             assert(parentTypeDec && parentTypeDec->ty == A_ty::type::RecordTy);
             int idx = getIdxInRecordTy(v->sym, parentTypeDec);
-            A_ty *fieldType = getFieldTypeDec(v->sym, parentTypeDec);
+            A_ty *fieldTypeDec = getFieldTypeDec(v->sym, parentTypeDec);
             auto fieldPtr = builder.CreateGEP(parentValue->getType(), parentValue, 
                                 llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
                                 llvm::APInt(64, idx)));
-            return { fieldPtr, fieldType };
+            return { fieldPtr, fieldTypeDec };
         }
     case A_var::type::SUBSCRIPT:
         {
             auto v = dynamic_cast<A_SubscriptVar*>(var);
             auto parent = genLeftValue(v->var);
-            Value *parentValue = parent.first;
+            Value *parentValue = convertRightValue(parent.first);
             A_ArrayTy *parentTypeDec = dynamic_cast<A_ArrayTy*>(parent.second);
             assert(parentTypeDec && parentTypeDec->ty == A_ty::type::ArrayTy);
             Value *offset = genExp(v->exp);
-            auto elementTy = tdecs.get(parentTypeDec->array);
-            assert(elementTy);
+            auto elementTyDec = tdecs.get(parentTypeDec->array);
+            assert(elementTyDec);
             auto elementPtr = builder.CreateGEP(parentValue->getType(), parentValue, offset);
-            return { elementPtr, elementTy };
+            return { elementPtr, elementTyDec };
         }
     }
+    assert(0);
+    return {};
 }
 
 Value *generator::genNilExp(A_NilExp *exp) {
-    return ConstantPointerNull::get(llvm::cast<PointerType>(NilTy));
+    return llvm::ConstantPointerNull::get(llvm::cast<llvm::PointerType>(NilTy));
 }
 
 Value *generator::genIntExp(A_IntExp *exp) {
-    return ConstantInt::get(context, APInt(64, exp->i, true));
+    return llvm::ConstantInt::get(context, llvm::APInt(64, exp->i, true));
 }
 
 Value *generator::genStringExp(A_StringExp *exp) {
@@ -190,7 +157,7 @@ Value *generator::genRecordExp(A_RecordExp *exp) {
     assert(type != nullptr && type->isPointerTy());
     auto elementType = llvm::cast<llvm::PointerType>(type)->getElementType();
     assert(elementType->isStructTy());
-    auto structType = llvm::cast<StructType>(elementType);
+    auto structType = llvm::cast<llvm::StructType>(elementType);
     auto size = module->getDataLayout().getTypeAllocSize(structType);
     Value *sz = llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, size));
     std::string allocator{"alloca"};
@@ -204,6 +171,9 @@ Value *generator::genRecordExp(A_RecordExp *exp) {
         auto idx = getIdxInRecordTy(list->head->name, tydec);
         auto initVal = genExp(list->head->exp);
         auto fieldTy = getFieldType(list->head->name, tydec);
+        if(initVal->getType() == NilTy) {
+            initVal = convertTypedNil(fieldTy);
+        }
         auto fieldPtr = builder.CreateGEP(structType, ptr, 
                             llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
                                llvm::APInt(64, idx)));
@@ -223,10 +193,26 @@ Value *generator::genSeqExp(A_SeqExp *exp) {
 
 Value *generator::genAssignExp(A_AssignExp *exp) {
     assert(exp->var != nullptr);
-    A_VarExp varExp{0, exp->var};
-    auto dst = genVarExp(&varExp);
+    auto dst = genLeftValue(exp->var);
     auto val = genExp(exp->exp);
-    builder.CreateStore(val, dst);
+    if(val->getType() == NilTy) {
+        // need to deduction type
+        if(dst.second == nullptr) { // string type has no dec
+            val = convertTypedNil(Type::getInt8PtrTy(context));
+        }
+        // record type
+        else if(dst.second->ty == A_ty::type::RecordTy) {
+            val = convertTypedNil(
+                getFieldType(
+                    dynamic_cast<A_FieldVar*>(exp->var)->sym,
+                    dynamic_cast<A_RecordTy*>(dst.second)));
+        }
+        // array type
+        else if(dst.second->ty == A_ty::type::ArrayTy) {
+            val = convertTypedNil(tenv.get(dynamic_cast<A_ArrayTy*>(dst.second)->array));
+        }
+    }
+    builder.CreateStore(val, dst.first);
     return nullptr;
 }
 
@@ -255,7 +241,7 @@ Value *generator::genIfExp(A_IfExp *exp) {
     if(exp->elsee == nullptr)
         return nullptr;
     
-    PHINode *node = builder.CreatePHI(ThenV->getType(), 2, "iftmp");
+    llvm::PHINode *node = builder.CreatePHI(ThenV->getType(), 2, "iftmp");
     node->addIncoming(ThenV, ThenBB);
     node->addIncoming(ElseV, ElseBB);
     return node;
@@ -292,6 +278,7 @@ Value *generator::genLetExp(A_LetExp *exp) {
     }
     genExp(exp->body);
     endScope();
+    return nullptr;
 }
 
 Value *generator::genForExp(A_ForExp *exp) {
@@ -308,20 +295,23 @@ Value *generator::genForExp(A_ForExp *exp) {
     builder.SetInsertPoint(InitBB);
     Value *low = genExp(exp->lo);
     assert(low != nullptr);
-    createNamedValue(exp->var, low);
+    createNamedValue(exp->var, low, Type::getInt64Ty(context));
     builder.CreateBr(CondBB);
 
     builder.SetInsertPoint(CondBB);
     Value *high = genExp(exp->hi);
     assert(high != nullptr);
-    Value *CondV = builder.CreateICmpSLE(getNamedValue(exp->var), high);
+    Value *CondV = builder.CreateICmpSLE(
+        builder.CreateLoad(getNamedValue(exp->var)), high);
     builder.CreateCondBr(CondV, ForBodyBB, EndBB);
 
     builder.SetInsertPoint(ForBodyBB);
     genExp(exp->body);
     // "i++"
     builder.CreateStore(
-        builder.CreateAdd(getNamedValue(exp->var), ConstantInt::get(context, APInt(64, 1, true))),
+        builder.CreateAdd(
+                builder.CreateLoad(getNamedValue(exp->var)),
+                llvm::ConstantInt::get(context, llvm::APInt(64, 1, true))),
         getNamedValue(exp->var));
     builder.CreateBr(CondBB);
 
@@ -339,6 +329,9 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
 
     // allocate space for the array
     auto elementType = llvm::cast<MyPointerType>(type)->getElementType();
+    if(initValue->getType() == NilTy) {
+        initValue = convertTypedNil(elementType);
+    }
     auto size = module->getDataLayout().getTypeAllocSize(elementType);
     Value *sz = llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, size));
     std::string allocator{"alloca"};
@@ -361,7 +354,7 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
 
     // "i < len"
     builder.SetInsertPoint(CondBB);
-    Value *CondV = builder.CreateICmpSLT(index, arrayLength);
+    Value *CondV = builder.CreateICmpSLT(builder.CreateLoad(index), arrayLength);
     builder.CreateCondBr(CondV, ForBodyBB, EndBB);
 
     // "arr[i] = init_val"
@@ -371,7 +364,9 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
 
     // "index++"
     builder.CreateStore(
-        builder.CreateAdd(index, ConstantInt::get(context, APInt(64, 1, true))),
+        builder.CreateAdd(
+            builder.CreateLoad(index), 
+            llvm::ConstantInt::get(context, llvm::APInt(64, 1, true))),
         index);
     builder.CreateBr(CondBB);
     builder.SetInsertPoint(EndBB);
@@ -391,13 +386,13 @@ Value *generator::genBreakExp(A_BreakExp *exp) {
 
 Value *generator::getStrConstant(std::string &str) {
     Type *charType = Type::getInt8PtrTy(context);
-    Constant *strConstant = builder.CreateGlobalStringPtr(str);
+    llvm::Constant *strConstant = builder.CreateGlobalStringPtr(str);
     return strConstant;
 }
 
 void generator::genVarDec(A_VarDec *dec) {
     Value *initValue = genExp(dec->init);
-    createNamedValue(dec->var, initValue);
+    createNamedValue(dec->var, initValue, tenv.get(dec->type));
     vdecs.put(dec->var, dec);
 }
 
@@ -429,7 +424,7 @@ void generator::genTypeDec(A_TypeDec *dec) {
                 else
                     fields.push_back(tenv.get(l->head->type));
             }
-            auto structType = llvm::cast<StructType>(tenv.get(cur->name));
+            auto structType = llvm::cast<llvm::StructType>(tenv.get(cur->name));
             assert(structType != nullptr && structType->isStructTy());
             structType->setBody(fields);
         } else if(cur->ty->ty == A_ty::type::ArrayTy) {
@@ -459,7 +454,7 @@ void generator::genFuncDec(A_FunctionDec *dec) {
             assert(t != nullptr);
             paramTys.push_back(t);
         }
-        auto functionType = FunctionType::get(retTy, paramTys, false);
+        auto functionType = llvm::FunctionType::get(retTy, paramTys, false);
         auto func = Function::Create(functionType, Function::InternalLinkage, cur->name, module.get());
         fenv.put(cur->name, func);
     }
@@ -475,7 +470,7 @@ void generator::genFuncDec(A_FunctionDec *dec) {
         auto params = cur->params;
         for(auto &Arg : TheFunction->args()) {
             assert(params && params->head);
-            createNamedValue(params->head->name, &Arg);
+            createNamedValue(params->head->name, &Arg, tenv.get(params->head->type));
             params = params->tail;
         }
         Value *retVal = genExp(cur->body);
@@ -496,7 +491,7 @@ void generator::genDec(A_dec *dec) {
 }
 
 Function *generator::createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty) {
-    auto functionType = FunctionType::get(ret_ty, arg_tys, false);
+    auto functionType = llvm::FunctionType::get(ret_ty, arg_tys, false);
     auto func = Function::Create(functionType, Function::ExternalLinkage, name, module.get());
     return func;
 }
@@ -521,13 +516,20 @@ void generator::endScope() {
     tdecs.pop();
 }
 
-void generator::createNamedValue(std::string name, Value *value) {
+void generator::createNamedValue(std::string name, Value *value, Type *type) {
+    if(value->getType() == NilTy) {
+        value = convertTypedNil(type);
+    }
     Value *namedValue = builder.CreateAlloca(value->getType(), value);
     venv.put(name, namedValue);
 }
 
 Value *generator::getNamedValue(std::string name) {
     return venv.get(name);
+}
+
+Value *generator::convertRightValue(Value *leftValue) {
+    return builder.CreateLoad(leftValue);
 }
 
 void generator::initFenv() {
@@ -557,7 +559,7 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
     auto block = BasicBlock::Create(context, "entry", mainFunction);
     builder.SetInsertPoint(block);
     genExp(syntax_tree);
-    builder.CreateRet(llvm::ConstantInt::get(Type::getInt64Ty(context), APInt(64, 0)));
+    builder.CreateRet(llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, 0)));
 
     std::error_code EC;
     llvm::raw_fd_ostream OS {filename, EC};

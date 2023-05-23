@@ -2,7 +2,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
-
+namespace FRONTEND {
 token parser::tok() {
     if(q.empty())
         return lex.next();
@@ -558,4 +558,5 @@ A_decList* parser::decs() {
 
 A_exp* parser::parse() {
     return exp();
+}
 }

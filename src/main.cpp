@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     if (argc == 3) {
         output_file = std::string{argv[2]};
     }
-    parser p(input_file);
+    FRONTEND::parser p(input_file);
     auto tree = p.parse();
     tychecker c(tree);
     c.check();

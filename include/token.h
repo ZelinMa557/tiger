@@ -1,52 +1,53 @@
 #pragma once
 #include <string>
 #include <vector>
-#define WHILE 1
-#define FOR 2
-#define TO 3
-#define BREAK 4
-#define LET 5
-#define IN 6
-#define END 7
-#define FUNCTION 8
-#define VAR 9
-#define TYPE 10
-#define ARRAY 11
-#define IF 12
-#define THEN 13
-#define ELSE 14
-#define DO 15
-#define OF 16
-#define NIL 17
-#define COMMA 18
-#define COLON 19
-#define SEMICOLON 20
-#define L_SMALL 21
-#define R_SMALL 22
-#define L_MID 23
-#define R_MID 24
-#define L_BIG 25
-#define R_BIG 26
-#define DOT 27
-#define ADD 28
-#define SUB 29
-#define MUL 30
-#define DIV 31
-#define EQ 32
-#define NEQ 33
-#define LT 34
-#define LE 35
-#define GT 36
-#define GE 37
-#define AND 38
-#define OR 39
-#define ASSIGN 40
-#define INT_TYPE 41
-#define STR_TYPE 42
+namespace FRONTEND {
+const int  WHILE = 1;
+const int  FOR = 2;
+const int  TO = 3;
+const int  BREAK = 4;
+const int  LET = 5;
+const int  IN = 6;
+const int  END = 7;
+const int  FUNCTION = 8;
+const int  VAR = 9;
+const int  TYPE = 10;
+const int  ARRAY = 11;
+const int  IF = 12;
+const int  THEN = 13;
+const int  ELSE = 14;
+const int  DO = 15;
+const int  OF = 16;
+const int  NIL = 17;
+const int  COMMA = 18;
+const int  COLON = 19;
+const int  SEMICOLON = 20;
+const int  L_SMALL = 21;
+const int  R_SMALL = 22;
+const int  L_MID = 23;
+const int  R_MID = 24;
+const int  L_BIG = 25;
+const int  R_BIG = 26;
+const int  DOT = 27;
+const int  ADD = 28;
+const int  SUB = 29;
+const int  MUL = 30;
+const int  DIV = 31;
+const int  EQ = 32;
+const int  NEQ = 33;
+const int  LT = 34;
+const int  LE = 35;
+const int  GT = 36;
+const int  GE = 37;
+const int  AND = 38;
+const int  OR = 39;
+const int  ASSIGN = 40;
+const int  INT_TYPE = 41;
+const int  STR_TYPE = 42;
 
-#define IDENTIFIER 43
-#define INT_LITERAL 44
-#define STR_LITERAL 45
+const int  IDENTIFIER = 43;
+const int  INT_LITERAL = 44;
+const int  STR_LITERAL = 45;
 
 class token
 {
@@ -120,4 +121,5 @@ inline std::string token::to_str() {
         ans += val;
     }
     return ans;
+}
 }

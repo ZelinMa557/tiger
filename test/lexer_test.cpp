@@ -3,7 +3,7 @@
 #include <iostream>
 
 using namespace std;
-
+using namespace FRONTEND;
 int main(int argc, char **argv) {
     if(argc < 2) {
         cerr << "need filename!" <<endl;

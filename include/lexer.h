@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <fstream>
+namespace FRONTEND {
 class lexer
 {
 private:
@@ -35,3 +36,4 @@ public:
     lexer(std::string src_file);
     token next();
 };
+}

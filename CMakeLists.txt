@@ -12,8 +12,8 @@ find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-llvm_map_components_to_libnames(llvm_libs support core irreader)
+separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+add_definitions(${LLVM_DEFINITIONS_LIST})
 
 include_directories(include)
 set(LEXER_SRC src/lexer.cpp)
@@ -27,4 +27,6 @@ add_executable(parser_test ${LEXER_SRC} ${PARSER_SRC} src/printabs.cpp test/pars
 add_executable(checker_test ${LEXER_SRC} ${PARSER_SRC} ${CHECKER_SRC} src/printabs.cpp test/tychecker_test.cpp)
 
 add_executable(tiger ${MAIN_SRC} ${LEXER_SRC} ${PARSER_SRC} ${CHECKER_SRC} ${GENERATOR_SRC})
+llvm_map_components_to_libnames(llvm_libs support core BitWriter)
+message(STATUS "Using LLVM libs: ${llvm_libs}")
 target_link_libraries(tiger ${llvm_libs})

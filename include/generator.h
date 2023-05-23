@@ -14,7 +14,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-using namespace llvm;
+
 template <typename T>
 class tbl {
 private:
@@ -39,12 +39,15 @@ public:
     };
     void begin() { q.push_back(""); };
 };
-
+using Value = llvm::Value;
+using Type = llvm::Type;
+using Function = llvm::Function;
+using BasicBlock = llvm::BasicBlock;
 class generator {
 private:
-    LLVMContext context;
-    IRBuilder<> builder;
-    std::unique_ptr<Module> module;
+    llvm::LLVMContext context;
+    llvm::IRBuilder<> builder;
+    std::unique_ptr<llvm::Module> module;
     std::vector<BasicBlock*> loop_stack;
 
     tbl<Value> venv;
@@ -80,19 +83,24 @@ private:
     void endScope();
     void initFenv();
     Value *getStrConstant(std::string &str);
-    void createNamedValue(std::string name, Value *value);
+    void createNamedValue(std::string name, Value *value, Type *type);
     Value *getNamedValue(std::string name);
     int getIdxInRecordTy(std::string name, A_RecordTy *ty);
     Type *getFieldType(std::string name, A_RecordTy *ty);
     A_ty *getFieldTypeDec(std::string name, A_RecordTy *ty);
     Value *convertTypedNil(Type *type);
+    Value *convertRightValue(Value *leftValue);
 
     Function *createIntrinsicFunction(std::string name, std::vector<Type*> const &arg_tys, Type *ret_ty);
-    std::pair<Value*, A_ty*> genLeftValue(A_var *var);
+    std::pair<Value*, A_ty*> genLeftValue(A_var *vare);
 
-    Type *NilTy = PointerType::getUnqual(Type::getVoidTy(context));
+    Type *NilTy = llvm::PointerType::getUnqual(Type::getVoidTy(context));
 
 public:
-    generator() : builder(context) {};
+    generator() : builder(context) {
+        initFenv();
+        tenv.put("int", Type::getInt64Ty(context));
+        tenv.put("string", Type::getInt8PtrTy(context));
+    };
     void generate(A_exp *syntax_tree, std::string filename);
 };

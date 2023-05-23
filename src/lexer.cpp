@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include <iostream>
+namespace FRONTEND {
 lexer::lexer(std::string src_file) {
     src.open(src_file, std::ios::in);
     if(!src.is_open()) {
@@ -203,4 +204,5 @@ token lexer::next() {
     if(next_[0] == '"')
         return {STR_LITERAL, next_, line_cnt};
     return {IDENTIFIER, next_, line_cnt};
+}
 }

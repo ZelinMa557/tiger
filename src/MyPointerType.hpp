@@ -1,7 +1,7 @@
 #pragma once
 #include "generator.h"
 
-class MyPointerType : public Type
+class MyPointerType : public llvm::Type
 {
 private:
     Type *PointeeTy;
@@ -11,12 +11,12 @@ private:
         setSubclassData(AddrSpace);
     };
 
-    explicit MyPointerType(LLVMContext &C, unsigned AddrSpace) : Type(C, PointerTyID), PointeeTy(nullptr) {
+    explicit MyPointerType(llvm::LLVMContext &C, unsigned AddrSpace) : Type(C, PointerTyID), PointeeTy(nullptr) {
         setSubclassData(AddrSpace);
     }
 public:
     Type *getElementType() const {return PointeeTy; }
-    Type *setElementType(Type *ElementType) { 
+    void setElementType(Type *ElementType) { 
         PointeeTy = ElementType;
         ContainedTys = &PointeeTy;
         NumContainedTys = 1;
@@ -25,19 +25,27 @@ public:
     Type *getPointerElementType() const { return getElementType(); }
     unsigned getAddressSpace() const { return getSubclassData(); }
 
-    static MyPointerType *get(Type *ElementType, unsigned AddressSpace);
+    static MyPointerType *get(Type *ElementType, unsigned AddressSpace) {
+        return new MyPointerType(ElementType, AddressSpace);
+    };
     
-    static MyPointerType *get(LLVMContext &C, unsigned AddressSpace);
+    static MyPointerType *get(llvm::LLVMContext &C, unsigned AddressSpace) {
+        return new MyPointerType(C, AddressSpace);
+    };
 
     static MyPointerType *getUnqual(Type *ElementType) {
         return MyPointerType::get(ElementType, 0);
     }
 
-    static MyPointerType *getUnqual(LLVMContext &C) {
+    static MyPointerType *getUnqual(llvm::LLVMContext &C) {
         return MyPointerType::get(C, 0);
     }
     
-    static MyPointerType *create(LLVMContext &Context) {
+    static MyPointerType *create(llvm::LLVMContext &Context) {
         return get(Context, 0);
+    }
+
+    static bool classof(const Type *T) {
+        return T->getTypeID() == PointerTyID;
     }
 };

@@ -2,7 +2,7 @@
 #include <queue>
 #include "lexer.h"
 #include "abstract.h"
-
+namespace FRONTEND {
 class parser {
 private:
     lexer lex;
@@ -40,3 +40,4 @@ public:
     parser(std::string src_file) : lex(src_file) {};
     A_exp* parse();
 };
+}
