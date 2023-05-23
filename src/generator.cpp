@@ -187,6 +187,7 @@ Value *generator::genSeqExp(A_SeqExp *exp) {
     Value *res = nullptr;
     while(list != nullptr && list->head != nullptr) {
         res = genExp(list->head);
+        list = list->tail;
     }
     return res;
 }
@@ -560,7 +561,7 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
     builder.SetInsertPoint(block);
     genExp(syntax_tree);
     builder.CreateRet(llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, 0)));
-
+    std::cout<<"success to build, writing...\n";
     std::error_code EC;
     llvm::raw_fd_ostream OS {filename, EC};
     if (EC) {
@@ -568,4 +569,5 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
         return;
     }
     llvm::WriteBitcodeToFile(*module.get(), OS);
+    std::cout<<"Done.\n";
 }

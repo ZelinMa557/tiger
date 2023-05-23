@@ -97,7 +97,7 @@ private:
     Type *NilTy = llvm::PointerType::getUnqual(Type::getVoidTy(context));
 
 public:
-    generator() : builder(context) {
+    generator() : builder(context), module(new llvm::Module("The Module", context)) {
         initFenv();
         tenv.put("int", Type::getInt64Ty(context));
         tenv.put("string", Type::getInt8PtrTy(context));
