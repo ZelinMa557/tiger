@@ -101,6 +101,7 @@ public:
         initFenv();
         tenv.put("int", Type::getInt64Ty(context));
         tenv.put("string", Type::getInt8PtrTy(context));
+        tenv.put("void", Type::getVoidTy(context));
     };
     void generate(A_exp *syntax_tree, std::string filename);
 };

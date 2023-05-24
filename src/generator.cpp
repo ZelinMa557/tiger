@@ -297,6 +297,7 @@ Value *generator::genForExp(A_ForExp *exp) {
     Value *low = genExp(exp->lo);
     assert(low != nullptr);
     createNamedValue(exp->var, low, Type::getInt64Ty(context));
+    vdecs.put(exp->var, new A_VarDec(exp->pos, exp->var, "int", exp->body));
     builder.CreateBr(CondBB);
 
     builder.SetInsertPoint(CondBB);
@@ -446,7 +447,7 @@ void generator::genFuncDec(A_FunctionDec *dec) {
         if(cur->result.length() == 0)
             retTy = llvm::Type::getVoidTy(context);
         else
-            retTy = tenv.get(cur->name);
+            retTy = tenv.get(cur->result);
         assert(retTy != nullptr);
 
         std::vector<Type*> paramTys;
@@ -466,19 +467,25 @@ void generator::genFuncDec(A_FunctionDec *dec) {
         Function *TheFunction = fenv.get(cur->name);
         assert(TheFunction != nullptr);
         BasicBlock *Body = BasicBlock::Create(context, "entry", TheFunction);
+        auto originalPoint = builder.GetInsertPoint();
+        auto originalBlock = builder.GetInsertBlock();
         builder.SetInsertPoint(Body);
 
         auto params = cur->params;
         for(auto &Arg : TheFunction->args()) {
             assert(params && params->head);
             createNamedValue(params->head->name, &Arg, tenv.get(params->head->type));
+            vdecs.put(params->head->name, new A_VarDec(params->head->pos, params->head->name, params->head->type, nullptr));
             params = params->tail;
         }
         Value *retVal = genExp(cur->body);
-        builder.CreateRet(retVal);
-        if(!verifyFunction(*TheFunction))
+        if(retVal != nullptr && TheFunction->getFunctionType()->getReturnType() != Type::getVoidTy(context))
+            builder.CreateRet(retVal);
+        else builder.CreateRet(nullptr);
+        if(verifyFunction(*TheFunction))
             error("Generator: Fail to generate function " + cur->name);
         endScope();
+        builder.SetInsertPoint(originalBlock, originalPoint);
     }
 }
 
@@ -568,6 +575,7 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
         llvm::errs() << "Could not open file: " << EC.message() << "\n";
         return;
     }
+    module->print(llvm::outs(), nullptr);
     llvm::WriteBitcodeToFile(*module.get(), OS);
     std::cout<<"Done.\n";
 }
