@@ -528,7 +528,8 @@ void generator::createNamedValue(std::string name, Value *value, Type *type) {
     if(value->getType() == NilTy) {
         value = convertTypedNil(type);
     }
-    Value *namedValue = builder.CreateAlloca(value->getType(), value);
+    Value *namedValue = builder.CreateAlloca(value->getType());
+    builder.CreateStore(value, namedValue);
     venv.put(name, namedValue);
 }
 
