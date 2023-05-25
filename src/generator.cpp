@@ -56,9 +56,7 @@ std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
             assert(parentTypeDec && parentTypeDec->ty == A_ty::type::RecordTy);
             int idx = getIdxInRecordTy(v->sym, parentTypeDec);
             A_ty *fieldTypeDec = getFieldTypeDec(v->sym, parentTypeDec);
-            auto fieldPtr = builder.CreateGEP(parentValue->getType(), parentValue, 
-                                llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
-                                llvm::APInt(64, idx)));
+            auto fieldPtr = builder.CreateGEP(parentValue, genIndice({0, idx}));
             return { fieldPtr, fieldTypeDec };
         }
     case A_var::type::SUBSCRIPT:
@@ -70,8 +68,8 @@ std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
             assert(parentTypeDec && parentTypeDec->ty == A_ty::type::ArrayTy);
             Value *offset = genExp(v->exp);
             auto elementTyDec = tdecs.get(parentTypeDec->array);
-            assert(elementTyDec);
-            auto elementPtr = builder.CreateGEP(parentValue->getType(), parentValue, offset);
+            assert(elementTyDec || (parentTypeDec->array == "int") || (parentTypeDec->array == "string"));
+            auto elementPtr = builder.CreateGEP(parentValue, offset);
             return { elementPtr, elementTyDec };
         }
     }
@@ -160,10 +158,10 @@ Value *generator::genRecordExp(A_RecordExp *exp) {
     auto structType = llvm::cast<llvm::StructType>(elementType);
     auto size = module->getDataLayout().getTypeAllocSize(structType);
     Value *sz = llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, size));
-    std::string allocator{"alloca"};
+    std::string allocator{"alloc"};
 
     Value *ptr = builder.CreateCall(fenv.get(allocator), sz);
-    ptr = builder.CreateBitCast(ptr, structType);
+    ptr = builder.CreateBitCast(ptr, llvm::cast<llvm::PointerType>(type));
     auto list = exp->fields;
     auto tydec = dynamic_cast<A_RecordTy*>(tdecs.get(exp->type));
     assert(tydec != nullptr);
@@ -171,12 +169,11 @@ Value *generator::genRecordExp(A_RecordExp *exp) {
         auto idx = getIdxInRecordTy(list->head->name, tydec);
         auto initVal = genExp(list->head->exp);
         auto fieldTy = getFieldType(list->head->name, tydec);
+        assert(fieldTy != nullptr);
         if(initVal->getType() == NilTy) {
             initVal = convertTypedNil(fieldTy);
         }
-        auto fieldPtr = builder.CreateGEP(structType, ptr, 
-                            llvm::ConstantInt::get(llvm::Type::getInt64Ty(context),
-                               llvm::APInt(64, idx)));
+        auto fieldPtr = builder.CreateGEP(ptr, genIndice({0, idx}));
         builder.CreateStore(initVal, fieldPtr);
     }
     return ptr;
@@ -199,7 +196,7 @@ Value *generator::genAssignExp(A_AssignExp *exp) {
     if(val->getType() == NilTy) {
         // need to deduction type
         if(dst.second == nullptr) { // string type has no dec
-            val = convertTypedNil(Type::getInt8PtrTy(context));
+            val = convertTypedNil(llvm::PointerType::getUnqual(llvm::Type::getInt8PtrTy(context)));
         }
         // record type
         else if(dst.second->ty == A_ty::type::RecordTy) {
@@ -336,7 +333,7 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     }
     auto size = module->getDataLayout().getTypeAllocSize(elementType);
     Value *sz = llvm::ConstantInt::get(Type::getInt64Ty(context), llvm::APInt(64, size));
-    std::string allocator{"alloca"};
+    std::string allocator{"alloc"};
     Value *ptr = builder.CreateCall(fenv.get(allocator), builder.CreateMul(arrayLength, sz));
     ptr = builder.CreateBitCast(ptr, type, "array");
 
@@ -387,7 +384,6 @@ Value *generator::genBreakExp(A_BreakExp *exp) {
 }
 
 Value *generator::getStrConstant(std::string &str) {
-    Type *charType = Type::getInt8PtrTy(context);
     llvm::Constant *strConstant = builder.CreateGlobalStringPtr(str);
     return strConstant;
 }
@@ -403,7 +399,7 @@ void generator::genTypeDec(A_TypeDec *dec) {
     for(; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
         if(cur->ty->ty == A_ty::type::RecordTy) {
-            tenv.put(cur->name, llvm::StructType::create(context, cur->name));
+            tenv.put(cur->name, llvm::PointerType::getUnqual(llvm::StructType::create(context, cur->name)));
             tdecs.put(cur->name, cur->ty);
         } else if(cur->ty->ty == A_ty::type::ArrayTy) {
             tenv.put(cur->name, MyPointerType::create(context));
@@ -426,7 +422,9 @@ void generator::genTypeDec(A_TypeDec *dec) {
                 else
                     fields.push_back(tenv.get(l->head->type));
             }
-            auto structType = llvm::cast<llvm::StructType>(tenv.get(cur->name));
+            auto structPointerType = llvm::cast<llvm::PointerType>(tenv.get(cur->name));
+            assert(structPointerType != nullptr && structPointerType->isPointerTy());
+            auto structType = llvm::cast<llvm::StructType>(structPointerType->getElementType());
             assert(structType != nullptr && structType->isStructTy());
             structType->setBody(fields);
         } else if(cur->ty->ty == A_ty::type::ArrayTy) {
@@ -479,10 +477,10 @@ void generator::genFuncDec(A_FunctionDec *dec) {
             params = params->tail;
         }
         Value *retVal = genExp(cur->body);
-        if(retVal != nullptr && TheFunction->getFunctionType()->getReturnType() != Type::getVoidTy(context))
+        if(TheFunction->getFunctionType()->getReturnType() != Type::getVoidTy(context))
             builder.CreateRet(retVal);
         else builder.CreateRet(nullptr);
-        if(verifyFunction(*TheFunction))
+        if(verifyFunction(*TheFunction, &llvm::outs()))
             error("Generator: Fail to generate function " + cur->name);
         endScope();
         builder.SetInsertPoint(originalBlock, originalPoint);
@@ -579,4 +577,11 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
     module->print(llvm::outs(), nullptr);
     llvm::WriteBitcodeToFile(*module.get(), OS);
     std::cout<<"Done.\n";
+}
+
+std::vector<Value*> generator::genIndice(std::vector<int> ids) {
+    std::vector<Value*> ret;
+    for(auto id : ids)
+        ret.push_back(builder.getInt32(id));
+    return ret;
 }

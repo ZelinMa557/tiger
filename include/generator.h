@@ -96,11 +96,13 @@ private:
 
     Type *NilTy = llvm::PointerType::getUnqual(Type::getVoidTy(context));
 
+    std::vector<Value*> genIndice(std::vector<int> ids);
+
 public:
     generator() : builder(context), module(new llvm::Module("The Module", context)) {
         initFenv();
         tenv.put("int", Type::getInt64Ty(context));
-        tenv.put("string", Type::getInt8PtrTy(context));
+        tenv.put("string", llvm::Type::getInt8PtrTy(context));
         tenv.put("void", Type::getVoidTy(context));
     };
     void generate(A_exp *syntax_tree, std::string filename);
