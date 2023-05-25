@@ -105,5 +105,5 @@ public:
         tenv.put("string", llvm::Type::getInt8PtrTy(context));
         tenv.put("void", Type::getVoidTy(context));
     };
-    void generate(A_exp *syntax_tree, std::string filename);
+    void generate(A_exp *syntax_tree, std::string filename, int task);
 };

@@ -3,8 +3,8 @@
 #include <iostream>
 using namespace std;
 void space(int n) {
-    for(int i = 0; i < n; i++)
-        putchar(' ');
+    std::string str(n, ' ');
+    std::cout << str;
 }
 
 void print_exp(A_exp* exp, int front_space) {

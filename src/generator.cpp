@@ -565,7 +565,7 @@ void generator::initFenv() {
     fenv.put("alloc", createIntrinsicFunction("alloc", {intType}, stringType));
 }
 
-void generator::generate(A_exp *syntax_tree, std::string filename) {
+void generator::generate(A_exp *syntax_tree, std::string filename, int task) {
     auto mainFunctionType = llvm::FunctionType::get(llvm::Type::getInt64Ty(context), false);
     auto mainFunction =
         llvm::Function::Create(mainFunctionType, llvm::GlobalValue::ExternalLinkage,
@@ -581,8 +581,10 @@ void generator::generate(A_exp *syntax_tree, std::string filename) {
         llvm::errs() << "Could not open file: " << EC.message() << "\n";
         return;
     }
-    module->print(llvm::outs(), nullptr);
-    llvm::WriteBitcodeToFile(*module.get(), OS);
+    if (task == 1)
+        module->print(OS, nullptr);
+    else
+        llvm::WriteBitcodeToFile(*module.get(), OS);
     std::cout<<"Done.\n";
 }
 
