@@ -1,5 +1,4 @@
 #include "generator.h"
-#include "MyPointerType.hpp"
 #include <assert.h>
 #include <vector>
 #include <iostream>
@@ -69,7 +68,7 @@ std::pair<Value*, A_ty*> generator::genLeftValue(A_var *var) {
             Value *offset = genExp(v->exp);
             auto elementTyDec = tdecs.get(parentTypeDec->array);
             assert(elementTyDec || (parentTypeDec->array == "int") || (parentTypeDec->array == "string"));
-            auto elementPtr = builder.CreateGEP(parentValue, offset);
+            auto elementPtr = builder.CreateGEP(parentValue, builder.CreateTrunc(offset, builder.getInt32Ty()));
             return { elementPtr, elementTyDec };
         }
     }
@@ -239,6 +238,9 @@ Value *generator::genIfExp(A_IfExp *exp) {
     if(exp->elsee == nullptr)
         return nullptr;
     
+    if(ThenV == nullptr || ElseV == nullptr)
+        return nullptr;
+    
     llvm::PHINode *node = builder.CreatePHI(ThenV->getType(), 2, "iftmp");
     node->addIncoming(ThenV, ThenBB);
     node->addIncoming(ElseV, ElseBB);
@@ -327,7 +329,7 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     auto initValue = genExp(exp->init);
 
     // allocate space for the array
-    auto elementType = llvm::cast<MyPointerType>(type)->getElementType();
+    auto elementType = llvm::cast<llvm::PointerType>(type)->getElementType();
     if(initValue->getType() == NilTy) {
         initValue = convertTypedNil(elementType);
     }
@@ -347,25 +349,25 @@ Value *generator::genArrayExp(A_ArrayExp *exp) {
     // init "i"
     builder.CreateBr(InitBB);
     builder.SetInsertPoint(InitBB);
-    Value *index = builder.CreateAlloca(builder.getInt64Ty(), nullptr);
-    builder.CreateStore(builder.getInt64(0), index);
+    Value *index = builder.CreateAlloca(builder.getInt32Ty(), nullptr);
+    builder.CreateStore(builder.getInt32(0), index);
     builder.CreateBr(CondBB);
 
     // "i < len"
     builder.SetInsertPoint(CondBB);
-    Value *CondV = builder.CreateICmpSLT(builder.CreateLoad(index), arrayLength);
+    Value *CondV = builder.CreateICmpSLT(builder.CreateLoad(index), builder.CreateTrunc(arrayLength, builder.getInt32Ty()));
     builder.CreateCondBr(CondV, ForBodyBB, EndBB);
 
     // "arr[i] = init_val"
     builder.SetInsertPoint(ForBodyBB);
-    auto element = builder.CreateGEP(elementType, ptr, index);
+    auto element = builder.CreateGEP(ptr, builder.CreateLoad(index));
     builder.CreateStore(initValue, element);
 
     // "index++"
     builder.CreateStore(
         builder.CreateAdd(
             builder.CreateLoad(index), 
-            llvm::ConstantInt::get(context, llvm::APInt(64, 1, true))),
+            llvm::ConstantInt::get(context, llvm::APInt(32, 1, true))),
         index);
     builder.CreateBr(CondBB);
     builder.SetInsertPoint(EndBB);
@@ -396,17 +398,28 @@ void generator::genVarDec(A_VarDec *dec) {
 
 void generator::genTypeDec(A_TypeDec *dec) {
     auto l = dec->type;
+    // At first, we just focus on record type, because it supports pre declare
     for(; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
         if(cur->ty->ty == A_ty::type::RecordTy) {
             tenv.put(cur->name, llvm::PointerType::getUnqual(llvm::StructType::create(context, cur->name)));
             tdecs.put(cur->name, cur->ty);
-        } else if(cur->ty->ty == A_ty::type::ArrayTy) {
-            tenv.put(cur->name, MyPointerType::create(context));
+        }
+    }
+
+    // Then, we gen array types, which cannot be pre declared
+    for(l = dec->type; l != nullptr && l->head != nullptr; l = l->tail) {
+        auto cur = l->head;
+        if(cur->ty->ty == A_ty::type::ArrayTy) {
+            auto t = dynamic_cast<A_ArrayTy*>(cur->ty);
+            auto elementType = tenv.get(t->array);
+            auto pointerType = llvm::PointerType::getUnqual(elementType);
+            tenv.put(cur->name, pointerType);
             tdecs.put(cur->name, cur->ty);
         }
     }
 
+    // In the end, we set body of record type.
     for(l = dec->type; l != nullptr && l->head != nullptr; l = l->tail) {
         auto cur = l->head;
         if(cur->ty->ty == A_ty::type::RecordTy) {
@@ -427,12 +440,6 @@ void generator::genTypeDec(A_TypeDec *dec) {
             auto structType = llvm::cast<llvm::StructType>(structPointerType->getElementType());
             assert(structType != nullptr && structType->isStructTy());
             structType->setBody(fields);
-        } else if(cur->ty->ty == A_ty::type::ArrayTy) {
-            auto t = dynamic_cast<A_ArrayTy*>(cur->ty);
-            auto elementType = tenv.get(cur->name);
-            auto pointerType = llvm::cast<MyPointerType>(tenv.get(cur->name));
-            assert(elementType != nullptr && pointerType != nullptr && pointerType->isPointerTy());
-            pointerType->setElementType(elementType);
         }
     }
 }

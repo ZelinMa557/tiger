@@ -532,17 +532,17 @@ A_decList* parser::decs() {
             break;
         if(!vec.empty()) {
             if(vec.back()->ty == A_dec::type::FUNCDS && d->ty == A_dec::type::FUNCDS) {
-                auto back = dynamic_cast<A_FunctionDec*>(vec.back());
-                vec.pop_back();
-                auto list = new A_funcdecList(dynamic_cast<A_FunctionDec*>(d)->function->head, back->function);
-                vec.push_back(new A_FunctionDec(back->pos, list));
+                auto list = dynamic_cast<A_FunctionDec*>(vec.back())->function;
+                while (list->tail != nullptr)
+                    list = list->tail;
+                list->tail = dynamic_cast<A_FunctionDec*>(d)->function;
                 continue;
             }
             if(vec.back()->ty == A_dec::type::TYDS && d->ty == A_dec::type::TYDS) {
-                auto back = dynamic_cast<A_TypeDec*>(vec.back());
-                vec.pop_back();
-                auto list = new A_nametyList(dynamic_cast<A_TypeDec*>(d)->type->head, back->type);
-                vec.push_back(new A_TypeDec(back->pos, list));
+                auto list = dynamic_cast<A_TypeDec*>(vec.back())->type;
+                while (list->tail != nullptr)
+                    list = list->tail;
+                list->tail = dynamic_cast<A_TypeDec*>(d)->type;
                 continue;
             }
         }

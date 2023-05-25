@@ -51,7 +51,16 @@ void lexer::escape_comment() {
     else {
         back_char();
         back_char();
+        return;
     }
+    ch = get_next_char();
+    while (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r') {
+        if(ch == '\n') line_cnt++;
+        ch = get_next_char();
+    }
+    if (ch == '/')
+        escape_comment();
+    else back_char();
 }
 
 std::string lexer::get_num(char ch) {

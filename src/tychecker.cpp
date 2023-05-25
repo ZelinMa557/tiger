@@ -220,7 +220,7 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
                 if(sz_ty == nullptr || sz_ty->ty != TIGTY::INT)
                     error(e->pos, "Expr in [] are expected to be of type int");
                 auto init_ty = check_exp(e->init);
-                if(tbl.lookTy(arr_ty_->element_type) != init_ty)
+                if(tbl.lookTy(arr_ty_->element_type) != init_ty && init_ty != tbl.lookTy("nil"))
                     error(e->pos, "Initialization expr type mismatch ");
                 return arr_ty;
             }
