@@ -11,6 +11,39 @@ void tychecker::check() {
     check_exp(ast);
 }
 
+std::string convertString(std::string s) {
+    std::string convertedStr;
+    for (int i = 0; i < s.length(); i++) {
+        if (s[i] == '\\') {
+            switch (s[i + 1]) {
+            case 'n':
+                convertedStr += '\n';
+                i++;
+                break;
+            case 'r':
+                convertedStr += '\r';
+                i++;
+                break;
+            case 't':
+                convertedStr += '\t';
+                i++;
+                break;
+            case '\\':
+                convertedStr += '\\';
+                i++;
+                break;
+            default:
+                convertedStr += s[i];
+                break;
+            }
+        }
+        else {
+            convertedStr += s[i];
+        }
+    }
+    return convertedStr;
+}
+
 tgrTy* tychecker::check_exp(A_exp *exp) {
     if(!exp) return nullptr;
     using expty = A_exp::type;
@@ -23,7 +56,12 @@ tgrTy* tychecker::check_exp(A_exp *exp) {
             break;
         case expty::NilExp: return tbl.lookTy("nil"); break;
         case expty::IntExp: return tbl.lookTy("int"); break;
-        case expty::StringExp: return tbl.lookTy("string"); break;
+        case expty::StringExp:
+            {
+                auto e = dynamic_cast<A_StringExp*>(exp);
+                e->s = convertString(e->s);
+            }
+            return tbl.lookTy("string"); break;
         case expty::CallExp:
             {
                 auto e = dynamic_cast<A_CallExp*>(exp);
