@@ -215,6 +215,7 @@ Value *generator::genAssignExp(A_AssignExp *exp) {
 
 Value *generator::genIfExp(A_IfExp *exp) {
     Value *CondV = genExp(exp->test);
+    CondV = builder.CreateICmpNE(CondV, builder.getInt64(0));
     assert(CondV != nullptr);
 
     Function *TheFunction = builder.GetInsertBlock()->getParent();
