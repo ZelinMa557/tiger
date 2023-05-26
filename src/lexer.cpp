@@ -30,6 +30,7 @@ void lexer::escape_comment() {
     else if(ch == '*') {
         char last, cur;
         last = get_next_char();
+        if (last == '\n') line_cnt++;
         if(last == EOF) {
             std::cerr << "in line " << line_cnt << ":" <<std::endl;
             std::cerr<<"lexer: imcomplete comment, expected */" << std::endl;
@@ -37,6 +38,7 @@ void lexer::escape_comment() {
         }
         while(true) {
             cur = get_next_char();
+            if (cur == '\n') line_cnt++;
             if(cur == EOF) {
                 std::cerr << "in line " << line_cnt << ":" <<std::endl;
                 std::cerr<<"lexer: imcomplete comment, expected */" << std::endl;

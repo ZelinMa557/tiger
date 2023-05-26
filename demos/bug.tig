@@ -1,0 +1,10 @@
+let
+function op(i : int) : int =
+        if i=40 then 0             
+        else
+            if i= 43 then 2        
+            else
+                4
+in
+1
+end
