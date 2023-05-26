@@ -10,13 +10,6 @@ exp -> letexp
     -> forexp
     -> BREAK
     -> assignexp
-    -> orexp
-    -> andexp
-    -> relexp
-    -> addexp
-    -> mulexp
-    -> subexp
-    -> exps
 
 
 letexp -> LET decs IN exps END
@@ -71,15 +64,15 @@ tyfields_ -> COMMA tyfield tyfields_
 tyfield -> IDENTIFIER COLON IDENTIFIER
 
 assignexp -> orexp assignexp_
-assignexp_ -> ASSIGN assignexp
+assignexp_ -> ASSIGN exp
            ->
 
 orexp -> andexp orexp_
-orexp_ -> OR andexp
+orexp_ -> OR andexp orexp_
        ->
 
 andexp -> relexp andexp_
-andexp_ -> AND relexp
+andexp_ -> AND relexp andexp_
         ->
 
 relexp -> addexp relexp_
@@ -92,13 +85,14 @@ relexp_ -> EQ addexp
         ->
 
 addexp -> mulexp addexp_
-addexp_ -> ADD mulexp
-        -> SUB mulexp
+addexp_ -> ADD mulexp addexp_
+        -> SUB mulexp addexp_
         ->
 
 mulexp -> subexp mulexp_
-mulexp_ -> MUL mulexp
-        -> DIV mulexp
+mulexp_ -> MUL mulexp mulexp_
+        -> DIV mulexp mulexp_
+        ->
 
 subexp -> SUB value
        -> value

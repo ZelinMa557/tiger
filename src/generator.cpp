@@ -240,8 +240,12 @@ Value *generator::genIfExp(A_IfExp *exp) {
     
     if(ThenV == nullptr || ElseV == nullptr)
         return nullptr;
+
+    if(ThenV->getType() == builder.getVoidTy() || ElseV->getType() == builder.getVoidTy()) {
+        return nullptr;
+    }
     
-    llvm::PHINode *node = builder.CreatePHI(ThenV->getType(), 2, "iftmp");
+    llvm::PHINode *node = builder.CreatePHI(ThenV->getType(), 2);
     node->addIncoming(ThenV, ThenBB);
     node->addIncoming(ElseV, ElseBB);
     return node;
