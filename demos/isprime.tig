@@ -1,0 +1,11 @@
+let
+    var num := getint()
+    var i := 2
+    function mod(a : int, b : int) : int = a - a/b*b
+in
+    if num <=2 then (print("yes\n");exit(0));
+    while i*i <= num
+    do
+        if mod(num, i) = 0 then break else i := i+1;
+    if mod(num, i) = 0 then print("no\n") else print("yes\n")
+end

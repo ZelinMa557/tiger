@@ -109,12 +109,12 @@ Value *generator::genOpExp(A_OpExp *exp) {
     case A_oper::A_minusOp: return builder.CreateSub(lhs, rhs);
     case A_oper::A_timesOp: return builder.CreateMul(lhs, rhs);
     case A_oper::A_divideOp: return builder.CreateSDiv(lhs, rhs);
-    case A_oper::A_eqOp: return builder.CreateICmpEQ(lhs, rhs);
-    case A_oper::A_neqOp: return builder.CreateICmpNE(lhs, rhs);
-    case A_oper::A_ltOP: return builder.CreateICmpSLT(lhs, rhs);
-    case A_oper::A_leOp: return builder.CreateICmpSLE(lhs, rhs);
-    case A_oper::A_gtOp: return builder.CreateICmpSGT(lhs, rhs);
-    case A_oper::A_geOp: return builder.CreateICmpSGE(lhs, rhs);
+    case A_oper::A_eqOp: return builder.CreateZExt(builder.CreateICmpEQ(lhs, rhs), builder.getInt64Ty());
+    case A_oper::A_neqOp: return builder.CreateZExt(builder.CreateICmpNE(lhs, rhs), builder.getInt64Ty());
+    case A_oper::A_ltOP: return builder.CreateZExt(builder.CreateICmpSLT(lhs, rhs), builder.getInt64Ty());
+    case A_oper::A_leOp: return builder.CreateZExt(builder.CreateICmpSLE(lhs, rhs), builder.getInt64Ty());
+    case A_oper::A_gtOp: return builder.CreateZExt(builder.CreateICmpSGT(lhs, rhs), builder.getInt64Ty());
+    case A_oper::A_geOp: return builder.CreateZExt(builder.CreateICmpSGE(lhs, rhs), builder.getInt64Ty());
     }
     assert(0);
 }
@@ -262,6 +262,7 @@ Value *generator::genWhileExp(A_WhileExp *exp) {
     builder.CreateBr(CondBB);
     builder.SetInsertPoint(CondBB);
     Value *cond = genExp(exp->test);
+    cond = builder.CreateICmpNE(cond, builder.getInt64(0));
     assert(cond != nullptr);
     builder.CreateCondBr(cond, WhileBodyBB, EndBB);
 
