@@ -1,0 +1,36 @@
+let
+    var m := getint()
+    var n := getint()
+    var p := getint()
+    type vector = array of int
+    type matrix = array of vector
+    var left : matrix := matrix[m] of nil
+    var right : matrix := matrix[n] of nil
+    var result : matrix := matrix[m] of nil
+
+    function initMatrix(mat : matrix, row : int, col : int) =
+        for i := 0 to row-1 do
+            mat[i] := vector[col] of 0
+
+    function getMatrix(mat : matrix, row : int, col : int) =
+        for i := 0 to row-1 do
+            for j := 0 to col-1 do
+                mat[i][j] := getint()
+
+    function printMatrix(mat : matrix, row : int, col : int) =
+        for i := 0 to row-1 do (
+            for j := 0 to col-1 do
+                (puti(mat[i][j]);print(" "));
+            print("\n"))
+in
+    initMatrix(left, m, n);
+    initMatrix(right, n, p);
+    initMatrix(result, m, p);
+    getMatrix(left, m, n);
+    getMatrix(right, n, p);
+    for i := 0 to m-1 do
+        for j := 0 to p-1 do
+            for k := 0 to n-1 do
+                result[i][j] := result[i][j] + left[i][k] * right[k][j];
+    printMatrix(result, m, p)
+end

@@ -179,11 +179,6 @@ A_exp* parser::assignexp_() {
 A_exp* parser::orexp() {
     auto a = andexp();
     return orexp_(a);
-    // auto o = orexp_();
-    // if(o == nullptr)
-    //     return a;
-    // auto one_exp = new A_IntExp(a->pos, 1);
-    // return new A_IfExp(a->pos, a, one_exp, o);
 }
 
 A_exp* parser::orexp_(A_exp *parent) {
@@ -201,11 +196,6 @@ A_exp* parser::orexp_(A_exp *parent) {
 A_exp* parser::andexp() {
     auto r = relexp();
     return andexp_(r);
-    // auto a = andexp_();
-    // if(a == nullptr)
-    //     return r;
-    // auto zero_exp = new A_IntExp(a->pos, 0);
-    // return new A_IfExp(a->pos, r, a, zero_exp);
 }
 
 A_exp* parser::andexp_(A_exp *parent) {
@@ -223,34 +213,10 @@ A_exp* parser::andexp_(A_exp *parent) {
 A_exp* parser::relexp() {
     auto a = addexp();
     return relexp_(a);
-    // int ty = 0;
-    // auto r = relexp_(ty);
-    // if(r == nullptr)
-    //     return a;
-    // A_oper op;
-    // switch(ty) {
-    // case EQ: op = A_oper::A_eqOp; break;
-    // case NEQ: op = A_oper::A_neqOp; break;
-    // case LE: op = A_oper::A_leOp; break;
-    // case LT: op = A_oper::A_ltOP; break;
-    // case GE: op = A_oper::A_geOp; break;
-    // case GT: op = A_oper::A_gtOp; break;
-    // }
-    // return new A_OpExp(a->pos, op, a, r);
 }
 
 A_exp* parser::relexp_(A_exp *parent) {
     token t = tok();
-    // switch (t.type)
-    // {
-    // case EQ: case NEQ: case LT:
-    // case LE: case GT: case GE:
-    //     ty = t.type;
-    //     break;
-    // default:
-    //     unuse(t);
-    //     return nullptr;
-    // }
     A_oper op;
     switch(t.type) {
     case EQ: op = A_oper::A_eqOp; break;
@@ -271,14 +237,6 @@ A_exp* parser::relexp_(A_exp *parent) {
 A_exp* parser::addexp() {
     auto m = mulexp();
     return addexp_(m);
-    // int ty = 0;
-    // auto a = addexp_(ty);
-    // if(a == nullptr)
-    //     return m;
-    // A_oper op;
-    // if(ty == ADD) op = A_oper::A_plusOp;
-    // else op = A_oper::A_minusOp;
-    // return new A_OpExp(m->pos, op, m, a);
 }
 
 A_exp* parser::addexp_(A_exp *parent) {
@@ -287,8 +245,6 @@ A_exp* parser::addexp_(A_exp *parent) {
         unuse(t);
         return parent;
     }
-    // ty = t.type;
-    // return addexp();
     A_oper op;
     if(t.type == ADD) op = A_oper::A_plusOp;
     else op = A_oper::A_minusOp;
@@ -300,14 +256,6 @@ A_exp* parser::addexp_(A_exp *parent) {
 A_exp* parser::mulexp() {
     auto s = subexp();
     return mulexp_(s);
-    // int ty = 0;
-    // auto m = mulexp_(ty);
-    // if(m == nullptr)
-    //     return s;
-    // A_oper op;
-    // if(ty == MUL) op = A_oper::A_timesOp;
-    // else op = A_oper::A_divideOp;
-    // return new A_OpExp(s->pos, op, s, m);
 }
 
 A_exp* parser::mulexp_(A_exp *parent) {
@@ -316,8 +264,6 @@ A_exp* parser::mulexp_(A_exp *parent) {
         unuse(t);
         return parent;
     }
-    // ty = t.type;
-    // return mulexp();
     A_oper op;
     if(t.type == MUL) op = A_oper::A_timesOp;
     else op = A_oper::A_divideOp;

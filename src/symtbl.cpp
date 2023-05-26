@@ -22,6 +22,8 @@ symtbl::symtbl() {
 
     fenv["puti"].push_back({void_ty, int_ty});
     fenv["getint"].push_back({int_ty});
+    fenv["gets"].push_back({string_ty});
+    fenv["size"].push_back({int_ty, string_ty});
 }
 
 void symtbl::beginScope() {

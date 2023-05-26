@@ -14,6 +14,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <iostream>
 
 template <typename T>
 class tbl {
@@ -21,7 +22,7 @@ private:
     std::unordered_map<std::string, std::vector<T*>> store;
     std::vector<std::string> q;
 public:
-    void put(std::string key, T *value) { store[key].push_back(value); };
+    void put(std::string key, T *value) { assert(key != ""); store[key].push_back(value); q.push_back(key); };
     T *get(std::string &key) {
         if(store.count(key))
             return store[key].back();

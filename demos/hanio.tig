@@ -1,0 +1,13 @@
+let
+    function p(left : string, right : string) =
+        (print(left);print(" -> ");print(right);print("\n"))
+    function hanio(n : int, A : string, B : string, C : string) = 
+        if n = 1 then p(A, C)
+        else (
+            hanio(n-1, A, C, B);
+            p(A, C);
+            hanio(n-1, B, A, C)
+        )
+in
+    hanio(getint(), "A", "B", "C")
+end

@@ -58,7 +58,7 @@ char* __substring__(char *s, __int64_t first, __int64_t n) {
     }
     char *substr = (char*)malloc((n+1) * sizeof(char));
     substr[n] = '\0';
-    memcpy(substr, s, n);
+    memcpy(substr, s+first, n);
     return substr;
 }
 
@@ -78,6 +78,12 @@ __int64_t __not__(__int64_t i) {
 
 void __exit__(__int64_t i) {
     exit(i);
+}
+
+char* __gets__() {
+    char *res = (char*)malloc(256);
+    scanf("%s", res);
+    return res;
 }
 
 void *alloc(__int64_t sz) {

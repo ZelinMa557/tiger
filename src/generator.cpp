@@ -532,7 +532,7 @@ void generator::endScope() {
     venv.pop();
     fenv.pop();
     tdecs.pop();
-    tdecs.pop();
+    vdecs.pop();
 }
 
 void generator::createNamedValue(std::string name, Value *value, Type *type) {
@@ -560,15 +560,17 @@ void generator::initFenv() {
     fenv.put("print", createIntrinsicFunction("__print__", {stringType}, voidType));
     fenv.put("puti", createIntrinsicFunction("__puti__", {intType}, voidType));
     fenv.put("flush", createIntrinsicFunction("__flush__", {}, voidType));
-    fenv.put("getchar", createIntrinsicFunction("__getchar__", {}, voidType));
+    fenv.put("getchar", createIntrinsicFunction("__getchar__", {}, stringType));
     fenv.put("getint", createIntrinsicFunction("__getint__", {}, intType));
     fenv.put("ord", createIntrinsicFunction("__ord__", {stringType}, intType));
     fenv.put("size", createIntrinsicFunction("__size__", {stringType}, intType));
     fenv.put("substring", createIntrinsicFunction("__substring__", {stringType, intType, intType}, stringType));
     fenv.put("concat", createIntrinsicFunction("__concat__", {stringType, stringType}, stringType));
-    fenv.put("not", createIntrinsicFunction("__not__", {intType}, voidType));
+    fenv.put("not", createIntrinsicFunction("__not__", {intType}, intType));
     fenv.put("exit", createIntrinsicFunction("__exit__", {intType}, voidType));
     fenv.put("alloc", createIntrinsicFunction("alloc", {intType}, stringType));
+    fenv.put("gets", createIntrinsicFunction("__gets__", {}, stringType));
+    fenv.put("chr", createIntrinsicFunction("alloc", {intType}, stringType));
 }
 
 void generator::generate(A_exp *syntax_tree, std::string filename, int task) {
