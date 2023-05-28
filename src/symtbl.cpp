@@ -44,7 +44,7 @@ void symtbl::endScope() {
             }
             break;
         case operation::TYDEC:
-            if(venv[name].size()) {
+            if(tenv[name].size()) {
                 tenv[name].pop_back();
                 if(tenv[name].size() == 0)
                     tenv.erase(name);
