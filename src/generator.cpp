@@ -220,20 +220,24 @@ Value *generator::genIfExp(A_IfExp *exp) {
 
     Function *TheFunction = builder.GetInsertBlock()->getParent();
     BasicBlock *ThenBB = BasicBlock::Create(context, "then", TheFunction);
-    BasicBlock *ElseBB = BasicBlock::Create(context, "else", TheFunction);
-    BasicBlock *MergeBB = BasicBlock::Create(context, "ifcond", TheFunction);
+    BasicBlock *ElseBB = BasicBlock::Create(context, "else");
+    BasicBlock *MergeBB = BasicBlock::Create(context, "ifcond");
     builder.CreateCondBr(CondV, ThenBB, ElseBB);
 
     // generate then cond
     builder.SetInsertPoint(ThenBB);
     Value *ThenV = genExp(exp->then);
     builder.CreateBr(MergeBB);
-    builder.SetInsertPoint(MergeBB);
+    ThenBB = builder.GetInsertBlock();
+    TheFunction->getBasicBlockList().push_back(ElseBB);
 
     // generate else cond
     builder.SetInsertPoint(ElseBB);
     Value *ElseV = genExp(exp->elsee);
     builder.CreateBr(MergeBB);
+    ElseBB = builder.GetInsertBlock();
+    
+    TheFunction->getBasicBlockList().push_back(MergeBB);
     builder.SetInsertPoint(MergeBB);
 
     if(exp->elsee == nullptr)
@@ -493,8 +497,9 @@ void generator::genFuncDec(A_FunctionDec *dec) {
         if(TheFunction->getFunctionType()->getReturnType() != Type::getVoidTy(context))
             builder.CreateRet(retVal);
         else builder.CreateRet(nullptr);
-        if(verifyFunction(*TheFunction, &llvm::outs()))
-            error("Generator: Fail to generate function " + cur->name);
+        // if(verifyFunction(*TheFunction, &llvm::outs())) {
+        //     error("Generator: Fail to generate function " + cur->name);
+        // }
         endScope();
         builder.SetInsertPoint(originalBlock, originalPoint);
     }

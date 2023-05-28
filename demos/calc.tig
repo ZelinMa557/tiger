@@ -1,21 +1,21 @@
 /* '(' 0
    '+' 2
    '-' 3
-   '*' 5
-   '/' 6
-   if op1 > op2+1 then op1 is prior to op2
+   '*' 4
+   '/' 5
+   if op1/2 > op2/2 then op1 is prior to op2
 */
 let
     type arr = array of int
     type stack = { sz : int, cap : int, arr : arr }
     function pop(s : stack) = (
         if s.sz = 0 then (print("cannot pop empty stack!\n");exit(1));
-        s.sz = s.sz - 1
+        s.sz := s.sz - 1
     )
     function push(s : stack, i : int) = (
         if s.sz = s.cap then (print("stack overflow!\n");exit(1));
-        s.arr[s.sz] = i;
-        s.sz = s.sz + 1
+        s.arr[s.sz] := i;
+        s.sz := s.sz + 1
     )
     function top(s : stack) : int = (
         if s.sz = 0 then (print("top empty stack!\n");exit(1));
@@ -36,17 +36,20 @@ let
             else
                 if i=45 then 3     // "-"
                 else
-                    if i = 42 then 5  // "*"
-                    else if i = 47 then 6 else -1  // "/"
+                    if i = 42 then 4  // "*"
+                    else if i = 47 then 5 else -1  // "/"
+    function log(a:int, b:int, res:int, op:string) =
+        (puti(a);print(op);puti(b);print("=");puti(res);print("\n"))
     function operate(s : stack, o : int) =
         let
             var n2 := top(s)
             var n1 := (pop(s);top(s))
         in
-            if o=2 then push(s, n1+n2)
-            else if o=3 then push(s, n1+n2)
-            else if o=5 then push(s, n1*n2)
-            else push(s, n1/n2)
+            pop(s);
+            if o=2 then (push(s, n1+n2);log(n1, n2, n1+n2, "+"))
+            else if o=3 then (push(s, n1-n2);log(n1, n2, n1-n2, "-"))
+            else if o=4 then (push(s, n1*n2);log(n1, n2, n1*n2, "*"))
+            else (push(s, n1/n2);log(n1, n2, n1/n2, "/"))
         end
     var nstk : stack := stack {}
     var ostk : stack := stack {}
@@ -63,20 +66,20 @@ in
             var num := 0
         in
             if isNumAscii(cur) then (
-                while isNumAscii(strAt(exp, fast)) & fast < len
-                    do (num = num * 10 + strAt(exp, fast) - 48; fast := fast + 1);
+                while fast < len & isNumAscii(strAt(exp, fast))
+                    do (num := num * 10 + strAt(exp, fast) - 48; fast := fast + 1);
                 push(nstk, num);
                 slow := fast)
             else (
-                if empty(ostk) | op(cur) > top(ostk) then push(ostk, op(cur))
+                if empty(ostk) | op(cur)/2 > top(ostk)/2 | op(cur)=0 then push(ostk, op(cur))
                 else
                     if op(cur) = -1 then (
-                        while top(ostk) <> 0 do (
+                        while not(empty(ostk)) & top(ostk) <> 0 do (
                             operate(nstk, top(ostk));
                             pop(ostk));
                         pop(ostk))
                     else (
-                        while not(empty(ostk)) | top(ostk) > op(cur) do (
+                        while not(empty(ostk)) & op(cur)/2 <= top(ostk)/2 do (
                             operate(nstk, top(ostk));
                             pop(ostk));
                         push(ostk, op(cur)));

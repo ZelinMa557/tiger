@@ -159,7 +159,7 @@ std::string lexer::get_string() {
         }
         if(ch != '"') {
             ret += ch;
-        } else if(last != '/') {
+        } else if(last != '\\') {
             break;
         }
         last = ch;
