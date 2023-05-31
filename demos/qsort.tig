@@ -1,0 +1,30 @@
+let
+    var len := getint()
+    type arr = array of int
+    var a : arr := arr[len] of 0
+    function qsort(a : arr, left : int, right : int) = (
+        if left < right then
+            let
+                var pivot := a[left]
+                var i := left
+                var j := right
+            in
+                while i < j do (
+                    while i < j & a[j] >= pivot do j := j-1;
+                    a[i] := a[j];
+                    while i < j & a[i] <= pivot do i := i+1;
+                    a[j] := a[i]
+                );
+                a[i] := pivot;
+                qsort(a, left, i-1);
+                qsort(a, i+1, right)
+            end
+    )
+in
+    for i := 0 to len-1 do
+        a[i] := getint();
+    qsort(a, 0, len-1);
+    for i := 0 to len-1 do
+        (puti(a[i]);print(" "));
+    print("\n")
+end
