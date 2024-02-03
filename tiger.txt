@@ -9,8 +9,44 @@ exp -> letexp
     -> whileexp
     -> forexp
     -> BREAK
-    -> assignexp
+    -> binaryexp (parse by pratt parser)
 
+binaryexp -> sub binaryexp_
+          -> binaryexp_
+
+binaryexp_ -> item op_exp_
+
+op_exp_ -> op item op_exp_
+        ->
+
+op -> ASSIGN
+   -> ADD
+   -> SUB
+   -> MUL
+   -> DIV
+   -> AND
+   -> OR
+   -> EQ
+   -> NEQ
+   -> LE
+   -> LT
+   -> GT
+   -> GE
+
+item -> NIL
+     -> INT_LITERAL
+     -> STRING_LITERAL
+     -> IDENTIFIER identifier_suffix_
+     -> L_SMALL exps R_SMALL
+
+identifier_suffix_ -> L_SMALL arglist R_SMALL
+                   -> L_MID exp R_MID of_exp_
+                   -> L_BIG fassignlist R_BIG
+                   -> DOT IDENTIFIER identifier_suffix_
+                   ->
+
+of_exp_ -> OF item
+        -> 
 
 letexp -> LET decs IN exps END
 
@@ -45,7 +81,7 @@ tydecs -> tydec tydecs
        ->
 tydec -> TYPE IDENTIFIER EQ ty
 
-vardec -> VAR IDENTIFIER COLON IDENTIFIER ASSIGN exp 
+vardec -> VAR IDENTIFIER COLON IDENTIFIER ASSIGN exp
 
 funcdecs -> funcdec funcdecs
 funcdec -> FUNCTION IDENTIFIER L_SMALL tyfields R_SMALL funcdec_
@@ -62,54 +98,6 @@ tyfields_ -> COMMA tyfield tyfields_
           ->
 
 tyfield -> IDENTIFIER COLON IDENTIFIER
-
-assignexp -> orexp assignexp_
-assignexp_ -> ASSIGN exp
-           ->
-
-orexp -> andexp orexp_
-orexp_ -> OR andexp orexp_
-       ->
-
-andexp -> relexp andexp_
-andexp_ -> AND relexp andexp_
-        ->
-
-relexp -> addexp relexp_
-relexp_ -> EQ addexp
-        -> NEQ addexp
-        -> LE addexp
-        -> LT addexp
-        -> GE addexp
-        -> GT addexp
-        ->
-
-addexp -> mulexp addexp_
-addexp_ -> ADD mulexp addexp_
-        -> SUB mulexp addexp_
-        ->
-
-mulexp -> subexp mulexp_
-mulexp_ -> MUL mulexp mulexp_
-        -> DIV mulexp mulexp_
-        ->
-
-subexp -> SUB value
-       -> value
-
-value  -> lval
-       -> INT_LITERAL
-       -> STRING_LITERAL
-       -> NIL
-       -> L_SMALL exps R_SMALL
-lval -> IDENTIFIER idexp
-idexp -> L_SMALL arglist R_SMALL
-      -> L_MID exp R_MID idexp_
-      -> L_BIG fassignlist R_BIG //todo: fix this expression
-      -> DOT IDENTIFIER idexp
-      ->
-idexp_ -> OF exp
-       -> idexp
 
 ## changes on grammer
 1. the body of for-exp, while-exp, if-then-exp might has value, and the exp itself has no value.
