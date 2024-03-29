@@ -402,29 +402,29 @@ A_fieldList* parser::field_list() {
     return list;
 }
 
-A_field* parser::field() {
+ptr<A_field> parser::field() {
     token name = eat(IDENTIFIER);
     eat(COLON);
     token type = eat(IDENTIFIER);
-    return new A_field(name.line, type.val, name.val);
+    return mk<A_field>(name.line, type.val, name.val);
 }
 
-A_ty* parser::ty() {
+ptr<A_ty> parser::ty() {
     token t = tok();
     switch (t.type)
     {
-    case IDENTIFIER: return new A_NameTy(t.line, t.val);
+    case IDENTIFIER: return mk<A_NameTy>(t.line, t.val);
     case ARRAY:
         {
             eat(OF);
             token id = eat(IDENTIFIER);
-            return new A_ArrayTy(t.line, id.val);
+            return mk<A_ArrayTy>(t.line, id.val);
         }
     case L_BIG:
         {
             auto list = field_list();
             eat(R_BIG);
-            return new A_RecordTy(t.line, list);
+            return mk<A_RecordTy>(t.line, list);
         }
     default:
         std::cerr << "in line " << t.line << ":" << std::endl;
@@ -468,7 +468,7 @@ A_decList* parser::decs() {
     return list;
 }
 
-A_exp* parser::parse() {
+ptr<A_exp> parser::parse() {
     return exp();
 }
 }
