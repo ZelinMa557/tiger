@@ -4,7 +4,9 @@
 #include <memory>
 #include "token.h"
 namespace tiger {
-enum class A_oper {A_plusOp, A_minusOp, A_timesOp, A_divideOp, 
+enum class A_oper {A_assignOp, A_andOp, A_orOP, // these three ops are not really appers in ast,
+                                                // only used in parsing stage.
+                    A_plusOp, A_minusOp, A_timesOp, A_divideOp, 
                     A_eqOp, A_neqOp, A_ltOP, A_leOp, A_gtOp, A_geOp};
 
 template <typename T>
@@ -20,15 +22,9 @@ struct A_exp;
 struct A_dec;
 struct A_ty;
 struct A_field;
-struct A_fieldList;
-struct A_expList;
 struct A_funcdec;
-struct A_funcdecList;
-struct A_decList;
 struct A_namety;
-struct A_nametyList;
 struct A_efield;
-struct A_efieldList;
 struct A_var {
 public:
     enum class type{SIMPLE, FIELD, SUBSCRIPT};
@@ -95,8 +91,8 @@ public:
 struct A_CallExp : public A_exp {
 public:
     S_symbol func;
-    ptr<A_expList> args;
-    A_CallExp(A_pos p, S_symbol func_, ptr<A_expList> args_) :
+    std::vector<ptr<A_exp>> args;
+    A_CallExp(A_pos p, S_symbol func_, std::vector<ptr<A_exp>> args_) :
                 A_exp(p, type::CallExp), func(func_), args(args_) {};
 };
 
@@ -112,15 +108,15 @@ public:
 struct A_RecordExp : public A_exp {
 public:
     S_symbol type;
-    ptr<A_efieldList> fields;
-    A_RecordExp(A_pos p, S_symbol type_,ptr<A_efieldList> fields_) :
+    std::vector<ptr<A_efield>> fields;
+    A_RecordExp(A_pos p, S_symbol type_, std::vector<ptr<A_efield>> fields_) :
         A_exp(p, type::RecordExp), type(type_), fields(fields_) {};
 };
 
 struct A_SeqExp : public A_exp {
 public:
-    ptr<A_expList> seq;
-    A_SeqExp(A_pos p, ptr<A_expList> seq_):
+    std::vector<ptr<A_exp>> seq;
+    A_SeqExp(A_pos p, std::vector<ptr<A_exp>> seq_):
         A_exp(p, type::SeqExp), seq(seq_) {};
 };
 
@@ -166,9 +162,9 @@ public:
 
 struct A_LetExp : public A_exp {
 public:
-    ptr<A_decList> decs;
+    std::vector<ptr<A_dec>> decs;
     ptr<A_exp> body;
-    A_LetExp(A_pos p, ptr<A_decList> decs_, ptr<A_exp> body_) :
+    A_LetExp(A_pos p, std::vector<ptr<A_dec>> decs_, ptr<A_exp> body_) :
         A_exp(p, type::LetExp), decs(decs_), body(body_) {};
 };
 
@@ -192,8 +188,8 @@ public:
 
 struct A_FunctionDec : A_dec {
 public:
-    ptr<A_funcdecList> function;
-    A_FunctionDec(A_pos p, ptr<A_funcdecList> function_) :
+    std::vector<ptr<A_funcdec>> function;
+    A_FunctionDec(A_pos p, std::vector<ptr<A_funcdec>> function_) :
         A_dec(p, type::FUNCDS), function(function_) {}; 
 };
 
@@ -208,8 +204,8 @@ public:
 
 struct A_TypeDec : A_dec {
 public:
-    ptr<A_nametyList> type;
-    A_TypeDec(A_pos p, ptr<A_nametyList> type_) :
+    std::vector<ptr<A_namety>> type;
+    A_TypeDec(A_pos p, std::vector<ptr<A_namety>> type_) :
         A_dec(p, type::TYDS), type(type_) {};
 };
 
@@ -230,8 +226,8 @@ public:
 
 struct A_RecordTy : public A_ty {
 public:
-    ptr<A_fieldList> record;
-    A_RecordTy(A_pos p, ptr<A_fieldList> record_) :
+    std::vector<ptr<A_field>> record;
+    A_RecordTy(A_pos p, std::vector<ptr<A_field>> record_) :
         A_ty(p, type::RecordTy), record(record_) {};
 };
 
@@ -249,46 +245,15 @@ public:
     A_field(A_pos pos_, S_symbol type_, S_symbol name_) : pos(pos_), type(type_), name(name_) {};
 };
 
-struct A_fieldList {
-public:
-    ptr<A_field> head;
-    ptr<A_fieldList> tail;
-    A_fieldList(ptr<A_field> head_, ptr<A_fieldList> tail_) : head(head_), tail(tail_) {};
-};
-
-struct A_expList {
-public:
-    ptr<A_exp> head;
-    ptr<A_expList> tail;
-    A_expList(ptr<A_exp> head_, ptr<A_expList> tail_) :
-        head(head_), tail(tail_) {};
-};
-
 struct A_funcdec {
 public:
     A_pos pos;
     S_symbol name;
-    ptr<A_fieldList> params;
+    std::vector<ptr<A_field>> params;
     S_symbol result;
     ptr<A_exp> body;
-    A_funcdec(A_pos p, S_symbol name_, ptr<A_fieldList> params_, S_symbol result_, ptr<A_exp> body_) :
+    A_funcdec(A_pos p, S_symbol name_, std::vector<ptr<A_field>> params_, S_symbol result_, ptr<A_exp> body_) :
         pos(p), name(name_), params(params_), result(result_), body(body_) {};
-};
-
-struct A_funcdecList {
-public:
-    ptr<A_funcdec> head;
-    ptr<A_funcdecList> tail;
-    A_funcdecList(ptr<A_funcdec> head_, ptr<A_funcdecList> tail_) :
-        head(head_), tail(tail_) {};
-};
-
-struct A_decList {
-public:
-    ptr<A_dec> head;
-    ptr<A_decList> tail;
-    A_decList(ptr<A_dec> head_, ptr<A_decList> tail_) :
-        head(head_), tail(tail_) {};
 };
 
 struct A_namety {
@@ -298,25 +263,10 @@ public:
     A_namety(S_symbol name_, ptr<A_ty> ty_) : name(name_), ty(ty_) {};
 };
 
-struct A_nametyList {
-public:
-    ptr<A_namety> head;
-    ptr<A_nametyList> tail;
-    A_nametyList(ptr<A_namety> head_, ptr<A_nametyList> tail_) :
-        head(head_), tail(tail_) {};
-};
-
 struct A_efield {
 public:
     S_symbol name;
     ptr<A_exp> exp;
     A_efield(S_symbol name_, ptr<A_exp> exp_) : name(name_), exp(exp_) {};
-};
-
-struct A_efieldList {
-    ptr<A_efield> head;
-    ptr<A_efieldList> tail;
-    A_efieldList(ptr<A_efield> head_, ptr<A_efieldList> tail_) :
-        head(head_), tail(tail_) {};
 };
 } // namespace tiger

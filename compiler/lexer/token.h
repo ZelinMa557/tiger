@@ -59,5 +59,57 @@ public:
     token(int t, std::string &v, int l) : type(t), val(v), line(l) {};
     token(int t, std::string &&v, int l) : type(t), val(v), line(l) {};
     ~token() = default;
+    std::string to_str();
 };
+
+inline std::string token::to_str() {
+    std::string ans;
+    switch (type)
+    {
+        case 1: ans = "WHILE"; break;
+        case 2: ans = "FOR"; break;
+        case 3: ans = "TO"; break;
+        case 4: ans = "BREAK"; break;
+        case 5: ans = "LET"; break;
+        case 6: ans = "IN"; break;
+        case 7: ans = "END"; break;
+        case 8: ans = "FUNCTION"; break;
+        case 9: ans = "VAR"; break;
+        case 10: ans = "TYPE"; break;
+        case 11: ans = "ARRAY"; break;
+        case 12: ans = "IF"; break;
+        case 13: ans = "THEN"; break;
+        case 14: ans = "ELSE"; break;
+        case 15: ans = "DO"; break;
+        case 16: ans = "OF"; break;
+        case 17: ans = "NIL"; break;
+        case 18: ans = "COMMA"; break;
+        case 19: ans = "COLON"; break;
+        case 20: ans = "SEMICOLON"; break;
+        case 21: ans = "L_SMALL"; break;
+        case 22: ans = "R_SMALL"; break;
+        case 23: ans = "L_MID"; break;
+        case 24: ans = "R_MID"; break;
+        case 25: ans = "L_BIG"; break;
+        case 26: ans = "R_BIG"; break;
+        case 27: ans = "DOT"; break;
+        case 28: ans = "ADD"; break;
+        case 29: ans = "SUB"; break;
+        case 30: ans = "MUL"; break;
+        case 31: ans = "DIV"; break;
+        case 32: ans = "EQ"; break;
+        case 33: ans = "NEQ"; break;
+        case 34: ans = "LT"; break;
+        case 35: ans = "LE"; break;
+        case 36: ans = "GT"; break;
+        case 37: ans = "GE"; break;
+        case 38: ans = "AND"; break;
+        case 39: ans = "OR"; break;
+        case 40: ans = "ASSIGN"; break;
+        case 41: ans = "IDENTIFIER" + val; break;
+        case 42: ans = "INT_LITERAL" + val; break;
+        case 43: ans = "STR_LITERAL" + val; break;
+    }
+    return ans;
+}
 } // namespace tiger
