@@ -208,9 +208,11 @@ ptr<A_exp> parser::binary_exp(int min_binding_power) {
     ptr<A_exp> lhs = nullptr;
     auto token = tok();
     switch (token.type) {
-    case ADD:
     case SUB:
         lhs = binary_exp(8);
+        lhs = make_shared<A_OpExp>(token.line, A_oper::A_minusOp, 
+                    make_shared<A_IntExp>(token.line, 0), lhs);
+        break;
     default:
         unuse(token);
     };

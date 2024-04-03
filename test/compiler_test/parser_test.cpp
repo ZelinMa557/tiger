@@ -94,7 +94,7 @@ TEST(parser, misc_test) {
 }
 
 TEST(parser, binary_exp_test2) {
-    auto ast1 = get_ast("a := -8 * 7");
+    auto ast1 = get_ast("a := -8 / 7");
     ASSERT_EQ(ast1->ty, A_exp::type::AssignExp);
     auto assign = dynamic_cast<A_AssignExp*>(ast1.get());
     ASSERT_EQ(assign->var->ty, A_var::type::SIMPLE);
@@ -102,8 +102,9 @@ TEST(parser, binary_exp_test2) {
     auto op_exp1 = dynamic_cast<A_OpExp*>(assign->exp.get());
     ASSERT_EQ(op_exp1->oper, A_oper::A_minusOp);
     check_int_expr(op_exp1->left, 0);
-    ASSERT_EQ(op_exp1->right, A_exp::type::OpExp);
+    ASSERT_EQ(op_exp1->right->ty, A_exp::type::OpExp);
     auto op_exp2 = dynamic_cast<A_OpExp*>(op_exp1->right.get());
+    ASSERT_EQ(op_exp2->oper, A_oper::A_divideOp);
     check_int_expr(op_exp2->left, 8);
     check_int_expr(op_exp2->right, 7);
 }
