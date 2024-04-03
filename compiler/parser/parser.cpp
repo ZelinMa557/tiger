@@ -320,7 +320,7 @@ ptr<A_exp> parser::item() {
                     std::cerr << "in line " << t.line << ": unexpected OF" << std::endl;
                 }
                 auto *subscript_var = dynamic_cast<A_SubscriptVar*>(result.get());
-                if (subscript_var->ty != A_var::type::SIMPLE) {
+                if (subscript_var->var->ty != A_var::type::SIMPLE) {
                     std::cerr << "in line " << t.line << ": unexpected OF" << std::endl;
                 }
                 return make_shared<A_ArrayExp>(ident.line, ident.val, subscript_var->exp, init_value);
