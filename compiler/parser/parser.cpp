@@ -64,7 +64,7 @@ std::optional<std::tuple<A_oper, int, int>> parser::get_operator(const token &to
         {EQ, {A_oper::A_eqOp, 5, 6}},
         {NEQ, {A_oper::A_neqOp, 5, 6}},
 
-        {ADD, {A_oper::A_andOp, 7, 8}},
+        {ADD, {A_oper::A_plusOp, 7, 8}},
         {SUB, {A_oper::A_minusOp, 7, 8}},
         {MUL, {A_oper::A_timesOp, 9, 10}},
         {DIV, {A_oper::A_divideOp, 9, 10}}
@@ -288,20 +288,23 @@ ptr<A_exp> parser::item() {
         unuse(next_token);
         result = make_shared<A_SimpleVar>(ident.line, ident.val);
     }
-    while (true) {
+    bool stop = false;
+    while (false == stop) {
         auto t = tok();
         switch (t.type) {
         case DOT:
             {
                 auto field = eat(IDENTIFIER);
-                result = make_shared<A_FieldVar>(ident.line, result, t.val);
+                result = make_shared<A_FieldVar>(ident.line, result, field.val);
             }
+            break;
         case L_MID:
             {
                 auto offset = exp();
                 result = make_shared<A_SubscriptVar>(ident.line, result, offset);
                 eat(R_MID);
             }
+            break;
         case L_BIG:
             // fall back to record exp
             {
@@ -322,6 +325,9 @@ ptr<A_exp> parser::item() {
                 }
                 return make_shared<A_ArrayExp>(ident.line, ident.val, subscript_var->exp, init_value);
             }
+        default:
+            unuse(t);
+            stop = true;
         }
     }
     return make_shared<A_VarExp>(ident.line, result);
