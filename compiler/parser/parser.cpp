@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "parser/parser.h"
 #include <iostream>
 #include <queue>
 #include <vector>
@@ -15,20 +15,20 @@ ptr<A_exp> binding_expr_oper(A_pos pos, A_oper op, ptr<A_exp> lhs, ptr<A_exp> rh
                 exit(1);
             }
             auto var_exp = dynamic_cast<A_VarExp*>(lhs.get());
-            return mk<A_AssignExp>(pos, var_exp->var, rhs);
+            return make_shared<A_AssignExp>(pos, var_exp->var, rhs);
         }
     case A_oper::A_andOp:
         {
-            auto zero = mk<A_IntExp>(pos, 0);
-            return mk<A_IfExp>(pos, lhs, rhs, zero);
+            auto zero = make_shared<A_IntExp>(pos, 0);
+            return make_shared<A_IfExp>(pos, lhs, rhs, zero);
         }
     case A_oper::A_orOP:
         {
-            auto one = mk<A_IntExp>(pos, 1);
-            return mk<A_IfExp>(pos, lhs, one, rhs);
+            auto one = make_shared<A_IntExp>(pos, 1);
+            return make_shared<A_IfExp>(pos, lhs, one, rhs);
         }
     }
-    return mk<A_OpExp>(pos, op, lhs, rhs);
+    return make_shared<A_OpExp>(pos, op, lhs, rhs);
 }
 }
 token parser::tok() {
@@ -94,7 +94,7 @@ ptr<A_dec> parser::dec() {
                 exit(1);
             }
             auto e = exp();
-            return mk<A_VarDec>(t.line, id.val, type, e);
+            return make_shared<A_VarDec>(t.line, id.val, type, e);
         } 
         break;
     case TYPE :
@@ -102,8 +102,8 @@ ptr<A_dec> parser::dec() {
             token id = eat(IDENTIFIER);
             eat(EQ);
             auto type = ty();
-            return mk<A_TypeDec>(id.line, 
-                    mk<A_nametyList>(mk<A_namety>(id.val, type), nullptr));
+            std::vector<ptr<A_namety>> types = {make_shared<A_namety>(id.val, type)};
+            return make_shared<A_TypeDec>(id.line, types);
         }
         break;
     case FUNCTION:
@@ -115,17 +115,17 @@ ptr<A_dec> parser::dec() {
             token next = tok();
             if(next.type == EQ) {
                 auto e = exp();
-                auto func = mk<A_funcdec>(t.line, func_name.val, list, "", e);
-                auto list = mk<A_funcdecList>(func, nullptr);
-                return mk<A_FunctionDec>(func_name.line, list);
+                auto func = make_shared<A_funcdec>(t.line, func_name.val, list, "", e);
+                std::vector<ptr<A_funcdec>> funcs = {func};
+                return make_shared<A_FunctionDec>(func_name.line, funcs);
             }
             else if(next.type == COLON) {
                 auto id = eat(IDENTIFIER);
                 eat(EQ);
                 auto e = exp();
-                auto func = mk<A_funcdec>(t.line, func_name.val, list, id.val, e);
-                auto list = mk<A_funcdecList>(func, nullptr);
-                return mk<A_FunctionDec>(func_name.line, list);
+                auto func = make_shared<A_funcdec>(t.line, func_name.val, list, id.val, e);
+                std::vector<ptr<A_funcdec>> funcs = {func};
+                return make_shared<A_FunctionDec>(func_name.line, funcs);
             }
             else {
                 std::cerr << "in line " << next.line << ":" << std::endl;
@@ -150,7 +150,7 @@ ptr<A_exp> parser::exp() {
             eat(IN);
             auto es = seqexp();
             eat(END);
-            return mk<A_LetExp>(t.line, ds, es);
+            return make_shared<A_LetExp>(t.line, ds, es);
         }
         break;
     case WHILE:
@@ -158,7 +158,7 @@ ptr<A_exp> parser::exp() {
             auto cond = exp();
             eat(DO);
             auto body = exp();
-            return mk<A_WhileExp>(t.line, cond, body);
+            return make_shared<A_WhileExp>(t.line, cond, body);
         }
         break;
     case FOR:
@@ -170,7 +170,7 @@ ptr<A_exp> parser::exp() {
             auto end = exp();
             eat(DO);
             auto body = exp();
-            return mk<A_ForExp>(t.line, ite.val, start, end, body);
+            return make_shared<A_ForExp>(t.line, ite.val, start, end, body);
         }
         break;
     case IF:
@@ -181,14 +181,14 @@ ptr<A_exp> parser::exp() {
             token expexted_else = tok();
             if(expexted_else.type != ELSE) {
                 unuse(expexted_else);
-                return mk<A_IfExp>(t.line, cond, True, nullptr);
+                return make_shared<A_IfExp>(t.line, cond, True, nullptr);
             }
             auto False = exp();
-            return mk<A_IfExp>(t.line, cond, True, False);
+            return make_shared<A_IfExp>(t.line, cond, True, False);
         }
         break;
     case BREAK:
-        return mk<A_BreakExp>(t.line);
+        return make_shared<A_BreakExp>(t.line);
         break;
     case L_SMALL:
         {
@@ -240,11 +240,11 @@ ptr<A_exp> parser::item() {
     switch (t.type)
     {
     case INT_LITERAL:
-        return mk<A_IntExp>(t.line, atoi(t.val.c_str()));
+        return make_shared<A_IntExp>(t.line, atoi(t.val.c_str()));
     case STR_LITERAL:
-        return mk<A_StringExp>(t.line, t.val.substr(1, t.val.length()-2));
+        return make_shared<A_StringExp>(t.line, t.val.substr(1, t.val.length()-2));
     case NIL:
-        return mk<A_NilExp>(t.line);
+        return make_shared<A_NilExp>(t.line);
     case L_SMALL:
         {
             auto seq = seqexp();
@@ -266,12 +266,12 @@ ptr<A_exp> parser::item() {
     // expected call exp
     case L_SMALL:
         {
+            std::vector<ptr<A_exp>> args;
             auto t = tok();
             if (t.type == R_SMALL) {
-                return mk<A_CallExp>(ident.line, ident.val, {});
+                return make_shared<A_CallExp>(ident.line, ident.val, args);
             }
             unuse(t);
-            std::vector<ptr<A_exp>> args;
             while (true) {
                 args.push_back(exp());
                 auto t = tok();
@@ -282,11 +282,11 @@ ptr<A_exp> parser::item() {
                 unuse(t);
                 eat(R_SMALL); // exit(1)
             }
-            return mk<A_CallExp>(ident.line, ident.val, args);
+            return make_shared<A_CallExp>(ident.line, ident.val, args);
         }
     default:
         unuse(next_token);
-        result = mk<A_SimpleVar>(ident.line, ident.val);
+        result = make_shared<A_SimpleVar>(ident.line, ident.val);
     }
     while (true) {
         auto t = tok();
@@ -294,38 +294,47 @@ ptr<A_exp> parser::item() {
         case DOT:
             {
                 auto field = eat(IDENTIFIER);
-                result = mk<A_FieldVar>(ident.line, result, t);
+                result = make_shared<A_FieldVar>(ident.line, result, t.val);
             }
         case L_MID:
             {
                 auto offset = exp();
-                result = mk<A_SubscriptVar>(ident.line, result, offset);
+                result = make_shared<A_SubscriptVar>(ident.line, result, offset);
                 eat(R_MID);
             }
         case L_BIG:
             // fall back to record exp
             {
-                
+                auto fields = efield_list();
                 eat(R_BIG);
+                return make_shared<A_RecordExp>(ident.line, ident.val, fields);
             }
         case OF:
             // fall back to array exp
             {
-
+                auto init_value = exp();
+                if (result->ty != A_var::type::SUBSCRIPT) {
+                    std::cerr << "in line " << t.line << ": unexpected OF" << std::endl;
+                }
+                auto *subscript_var = dynamic_cast<A_SubscriptVar*>(result.get());
+                if (subscript_var->ty != A_var::type::SIMPLE) {
+                    std::cerr << "in line " << t.line << ": unexpected OF" << std::endl;
+                }
+                return make_shared<A_ArrayExp>(ident.line, ident.val, subscript_var->exp, init_value);
             }
         }
     }
-    return mk<A_VarExp>(ident.line, result);
+    return make_shared<A_VarExp>(ident.line, result);
 }
 
 ptr<A_exp> parser::seqexp() {
     token t = tok();
+    std::vector<ptr<A_exp>> vec;
     if(t.type == R_SMALL) {
         unuse(t);
-        return mk<A_SeqExp>(t.line, nullptr);
+        return make_shared<A_SeqExp>(t.line, vec);
     }
     unuse(t);
-    std::vector<ptr<A_exp>> vec;
     A_pos p = 0;
     while(true) {
         auto e = exp();
@@ -337,94 +346,79 @@ ptr<A_exp> parser::seqexp() {
         unuse(t);
         break;
     }
-    A_expList* list(nullptr);
-    for(int i = vec.size()-1; i >= 0; i--) {
-        auto tail = list;
-        list = mk<A_expList>(vec[i], tail);
-    }
-    return mk<A_SeqExp>(p, list);
+    return make_shared<A_SeqExp>(p, vec);
 }
 
-A_efieldList* parser::efield_list() {
+std::vector<ptr<A_efield>> parser::efield_list() {
     token t = tok();
     if(t.type == R_BIG) {
         unuse(t);
-        return new A_efieldList(nullptr, nullptr);
+        return {};
     }
     unuse(t);
-    std::vector<A_efield*> vec;
+    std::vector<ptr<A_efield>> vec;
     while(true) {
         auto ef = efield();
-        vec.push_back(std::move(ef));
+        vec.push_back(ef);
         token t = tok();
         if(t.type == COMMA)
             continue;
         unuse(t);
         break;
     }
-    A_efieldList* list(nullptr);
-    for(int i = vec.size()-1; i >= 0; i--) {
-        auto tail = list;
-        list = new A_efieldList(vec[i], tail);
-    }
-    return list;
+    return vec;
 }
 
 ptr<A_efield> parser::efield() {
     token id = eat(IDENTIFIER);
     eat(EQ);
     auto e = exp();
-    return mk<A_efield>(id.val, e);
+    return make_shared<A_efield>(id.val, e);
 }
 
-A_fieldList* parser::field_list() {
+std::vector<ptr<A_field>> parser::field_list() {
     token t = tok();
     if(t.type == R_BIG || t.type == R_SMALL) {
         unuse(t);
-        return new A_fieldList(nullptr, nullptr);
+        return {};
     }
     unuse(t);
-    std::vector<A_field*> vec;
+    std::vector<ptr<A_field>> fields;
     while(true) {
         auto f = field();
-        vec.push_back(f);
+        fields.push_back(f);
         token t = tok();
         if(t.type == COMMA)
             continue;
         unuse(t);
         break;
     }
-    A_fieldList* list(nullptr);
-    for(int i = vec.size()-1; i >= 0; i--) {
-        auto tail = list;
-        list = new A_fieldList(vec[i], tail);
-    }
-    return list;
+    return fields;
 }
 
 ptr<A_field> parser::field() {
     token name = eat(IDENTIFIER);
     eat(COLON);
     token type = eat(IDENTIFIER);
-    return mk<A_field>(name.line, type.val, name.val);
+    return make_shared<A_field>(name.line, type.val, name.val);
 }
 
 ptr<A_ty> parser::ty() {
     token t = tok();
     switch (t.type)
     {
-    case IDENTIFIER: return mk<A_NameTy>(t.line, t.val);
+    case IDENTIFIER: return make_shared<A_NameTy>(t.line, t.val);
     case ARRAY:
         {
             eat(OF);
             token id = eat(IDENTIFIER);
-            return mk<A_ArrayTy>(t.line, id.val);
+            return make_shared<A_ArrayTy>(t.line, id.val);
         }
     case L_BIG:
         {
             auto list = field_list();
             eat(R_BIG);
-            return mk<A_RecordTy>(t.line, list);
+            return make_shared<A_RecordTy>(t.line, list);
         }
     default:
         std::cerr << "in line " << t.line << ":" << std::endl;
@@ -436,36 +430,27 @@ ptr<A_ty> parser::ty() {
     return nullptr;
 }
 
-A_decList* parser::decs() {
-    std::vector<A_dec*> vec;
+std::vector<ptr<A_dec>> parser::decs() {
+    std::vector<ptr<A_dec>> decs;
     while(true) {
         auto d = dec();
         if(d == nullptr)
             break;
-        if(!vec.empty()) {
-            if(vec.back()->ty == A_dec::type::FUNCDS && d->ty == A_dec::type::FUNCDS) {
-                auto list = dynamic_cast<A_FunctionDec*>(vec.back())->function;
-                while (list->tail != nullptr)
-                    list = list->tail;
-                list->tail = dynamic_cast<A_FunctionDec*>(d)->function;
+        if(!decs.empty()) {
+            if(decs.back()->ty == A_dec::type::FUNCDS && d->ty == A_dec::type::FUNCDS) {
+                auto &functions = dynamic_cast<A_FunctionDec*>(decs.back().get())->function;
+                functions.push_back(dynamic_cast<A_FunctionDec*>(d.get())->function[0]);
                 continue;
             }
-            if(vec.back()->ty == A_dec::type::TYDS && d->ty == A_dec::type::TYDS) {
-                auto list = dynamic_cast<A_TypeDec*>(vec.back())->type;
-                while (list->tail != nullptr)
-                    list = list->tail;
-                list->tail = dynamic_cast<A_TypeDec*>(d)->type;
+            if(decs.back()->ty == A_dec::type::TYDS && d->ty == A_dec::type::TYDS) {
+                auto &types = dynamic_cast<A_TypeDec*>(decs.back().get())->type;
+                types.push_back(dynamic_cast<A_TypeDec*>(d.get())->type[0]);
                 continue;
             }
         }
-        vec.push_back(std::move(d));
+        decs.push_back(d);
     }
-    A_decList* list(nullptr);
-    for(int i = vec.size()-1; i >= 0; i--) {
-        auto tail = list;
-        list = new A_decList(vec[i], tail);
-    }
-    return list;
+    return decs;
 }
 
 ptr<A_exp> parser::parse() {

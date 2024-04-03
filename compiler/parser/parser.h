@@ -18,14 +18,13 @@ private:
     ptr<A_exp> binary_exp(int min_binding_power);
     // item can be: var_exp, int or string literal, call_exp, seqexp, nil, array exp, record exp
     ptr<A_exp> item();
-    ptr<A_exp> parse_var_or_call_exp();
     std::optional<std::tuple<A_oper, int, int>> get_operator(const token &tok); 
-    ptr<A_efieldList> efield_list();
+    std::vector<ptr<A_efield>> efield_list();
     ptr<A_efield> efield();
-    ptr<A_fieldList> field_list();
+    std::vector<ptr<A_field>> field_list();
     ptr<A_field> field();
     ptr<A_ty> ty();
-    ptr<A_decList> decs();
+    std::vector<ptr<A_dec>> decs();
     ptr<A_exp> seqexp();
 public:
     parser() = delete;

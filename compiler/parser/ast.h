@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "token.h"
+#include "lexer/token.h"
 namespace tiger {
 enum class A_oper {A_assignOp, A_andOp, A_orOP, // these three ops are not really appers in ast,
                                                 // only used in parsing stage.
@@ -12,8 +12,7 @@ enum class A_oper {A_assignOp, A_andOp, A_orOP, // these three ops are not reall
 template <typename T>
 using ptr = std::shared_ptr<T>;
 
-template <typename T>
-using mk = std::make_shared<T>;
+using std::make_shared;
 
 using A_pos = int;
 using S_symbol = std::string;

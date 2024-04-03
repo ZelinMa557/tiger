@@ -1,9 +1,9 @@
 add_executable(
-    compiler_unit_test
+    lexer_test
     lexer_test.cpp
 )
 
-target_link_libraries(compiler_unit_test
+target_link_libraries(lexer_test
   PRIVATE
     lexer
     gtest
