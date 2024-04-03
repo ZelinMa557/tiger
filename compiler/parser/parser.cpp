@@ -210,7 +210,7 @@ ptr<A_exp> parser::binary_exp(int min_binding_power) {
     switch (token.type) {
     case ADD:
     case SUB:
-
+        lhs = binary_exp(8);
     default:
         unuse(token);
     };
